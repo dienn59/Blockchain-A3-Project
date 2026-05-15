@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — ProvenLedgerVN</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__brand">
+        <div class="navbar__logo">PL</div>
+        <div class="navbar__title">Proven<span>Ledger</span></div>
+      </a>
+      <ul class="navbar__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="scan.html">Scan &amp; Verify</a></li>
+        <li><a href="admin.html" class="active">Dashboard</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <div class="navbar__network">
+          <span class="navbar__network-dot"></span>
+          Polygon Amoy
+        </div>
+        <button class="wallet-btn" id="connectWallet" onclick="toggleWallet()">
+          <span class="wallet-btn__icon">◆</span>
+          Connect Wallet
+        </button>
+        <button class="navbar__hamburger" id="hamburger" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="scan.html">Scan &amp; Verify</a>
+    <a href="admin.html" class="active">Dashboard</a>
+    <button class="wallet-btn" onclick="toggleWallet()">
+      <span class="wallet-btn__icon">◆</span>
+      Connect Wallet
+    </button>
+  </div>
+
+  <!-- ===== DASHBOARD LAYOUT ===== -->
+  <div class="dashboard">
+
+    <!-- Mobile Tab Bar (shown on tablet/phone) -->
+    <div class="admin-mobile-tabs" id="mobileTabs">
+      <button class="active" onclick="showTab('overview')">📊 Dashboard</button>
+      <button onclick="showTab('register')">📦 Register Batch</button>
+      <button onclick="showTab('checkpoint')">📍 Checkpoint</button>
+      <button onclick="showTab('batches')">🗂️ All Batches</button>
+      <button onclick="showTab('activity')">📋 Activity</button>
+    </div>
+
+    <!-- Sidebar (hidden on mobile) -->
+    <aside class="sidebar">
+      <span class="sidebar__section-label">Overview</span>
+      <a href="#" class="sidebar__link active" onclick="showTab('overview')">
+        <span class="sidebar__link-icon">📊</span>
+        Dashboard
+      </a>
+
+      <span class="sidebar__section-label">Actions</span>
+      <a href="#" class="sidebar__link" onclick="showTab('register')">
+        <span class="sidebar__link-icon">📦</span>
+        Register Batch
+      </a>
+      <a href="#" class="sidebar__link" onclick="showTab('checkpoint')">
+        <span class="sidebar__link-icon">📍</span>
+        Add Checkpoint
+      </a>
+
+      <span class="sidebar__section-label">Data</span>
+      <a href="#" class="sidebar__link" onclick="showTab('batches')">
+        <span class="sidebar__link-icon">🗂️</span>
+        All Batches
+      </a>
+      <a href="#" class="sidebar__link" onclick="showTab('activity')">
+        <span class="sidebar__link-icon">📋</span>
+        Activity Log
+      </a>
+
+      <span class="sidebar__section-label">Settings</span>
+      <a href="#" class="sidebar__link">
+        <span class="sidebar__link-icon">⚙️</span>
+        Roles &amp; Access
+      </a>
+      <a href="#" class="sidebar__link">
+        <span class="sidebar__link-icon">🔑</span>
+        Contract Config
+      </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard__content">
+
+      <!-- ===== OVERVIEW TAB ===== -->
+      <div id="tab-overview">
+        <h2 class="dashboard__title">Dashboard</h2>
+        <p class="dashboard__subtitle">Overview of your on-chain supply chain activity</p>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__label">Total Batches</div>
+            <div class="stat-card__value" style="color: var(--accent-purple-light);">1,247</div>
+            <div class="stat-card__change stat-card__change--up">↑ 12% this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Active Checkpoints</div>
+            <div class="stat-card__value" style="color: var(--accent-green-light);">4,893</div>
+            <div class="stat-card__change stat-card__change--up">↑ 8% this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Consumer Scans</div>
+            <div class="stat-card__value" style="color: var(--accent-blue);">32,410</div>
+            <div class="stat-card__change stat-card__change--up">↑ 23% this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Anomaly Flags</div>
+            <div class="stat-card__value" style="color: var(--accent-amber);">7</div>
+            <div class="stat-card__change stat-card__change--down">↓ 2 from last month</div>
+          </div>
+        </div>
+
+        <!-- Recent Batches Table -->
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <h3>Recent Batches</h3>
+            <button class="btn btn--primary btn--sm" onclick="showTab('register')">+ Register New</button>
+          </div>
+          <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch ID</th>
+                <th>Product</th>
+                <th>Factory</th>
+                <th>Expiry</th>
+                <th>Checkpoints</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">0x3a9f…e4c2</td>
+                <td>Vinamilk Sure Prevent Gold</td>
+                <td>Bình Dương #2</td>
+                <td>2027-02-15</td>
+                <td>4</td>
+                <td><span class="badge badge--green">Delivered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x7c12…b3a1</td>
+                <td>Dermablock BB Sun Cream</td>
+                <td>HCM Plant #1</td>
+                <td>2027-06-30</td>
+                <td>3</td>
+                <td><span class="badge badge--blue">In Transit</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x5e8a…d7f3</td>
+                <td>Vinamilk Dielac Alpha Gold</td>
+                <td>Bình Dương #2</td>
+                <td>2027-01-20</td>
+                <td>4</td>
+                <td><span class="badge badge--green">Delivered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x2bf1…94e6</td>
+                <td>Vinamilk Sure Prevent Gold</td>
+                <td>Hà Nội Plant #3</td>
+                <td>2027-04-10</td>
+                <td>2</td>
+                <td><span class="badge badge--blue">In Transit</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x9d4c…f1a8</td>
+                <td>Dermablock Gentle Cleanser</td>
+                <td>HCM Plant #1</td>
+                <td>2027-08-22</td>
+                <td>1</td>
+                <td><span class="badge badge--purple">Registered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x6fab…28d5</td>
+                <td>Vinamilk Organic Gold</td>
+                <td>Lâm Đồng Plant</td>
+                <td>2026-12-01</td>
+                <td>4</td>
+                <td><span class="badge badge--amber">Near Expiry</span></td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-register" style="display: none;">
+        <h2 class="dashboard__title">Register New Batch</h2>
+        <p class="dashboard__subtitle">Mint a new Batch ID on the ProvenLedgerVN smart contract</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>📦 Batch Details</h3>
+            <p>All fields will be recorded immutably on-chain. Double-check before submitting.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Product Name</label>
+              <input id="reg-product-name" type="text" class="input" placeholder="e.g. Vinamilk Sure Prevent Gold 900g" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Production Date</label>
+                <input id="reg-prod-date" type="date" class="input" value="2026-05-15" />
+              </div>
+              <div class="form-group">
+                <label>Expiry Date</label>
+                <input id="reg-expiry-date" type="date" class="input" value="2027-06-15" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Factory Location</label>
+              <select id="reg-factory">
+                <option>Bình Dương Plant #2</option>
+                <option>HCM Plant #1</option>
+                <option>Hà Nội Plant #3</option>
+                <option>Lâm Đồng Plant</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Units in Batch</label>
+                <input id="reg-unit-count" type="number" class="input" placeholder="e.g. 10000" value="10000" />
+              </div>
+              <div class="form-group">
+                <label>Product Category</label>
+                <select id="reg-category">
+                  <option>Dairy — Nutritional</option>
+                  <option>Dairy — Fresh Milk</option>
+                  <option>Cosmetics — Skincare</option>
+                  <option>Cosmetics — Suncare</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Notes (optional — stored off-chain)</label>
+              <textarea id="reg-notes" placeholder="Additional notes about this batch, e.g. special packaging run, limited edition…"></textarea>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--primary" onclick="submitRegister()">
+              ⬡&ensp;Register on Polygon
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CHECKPOINT TAB ===== -->
+      <div id="tab-checkpoint" style="display: none;">
+        <h2 class="dashboard__title">Add Checkpoint</h2>
+        <p class="dashboard__subtitle">Record a supply chain state change for an existing batch</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>📍 Checkpoint Details</h3>
+            <p>This will trigger a state-change event on the smart contract for the selected batch.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Batch ID (paste the 0x… hex from Register success modal)</label>
+              <input id="ckp-batch-id" type="text" class="input" placeholder="0x…" />
+            </div>
+
+            <div class="form-group">
+              <label>New Status</label>
+              <select id="ckp-status">
+                <option>Shipped from Factory</option>
+                <option>Arrived at Distribution Hub</option>
+                <option>In Transit to Region</option>
+                <option>Arrived at Regional Depot</option>
+                <option>Delivered to Retail Store</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Location Name</label>
+              <input id="ckp-location-name" type="text" class="input" placeholder="e.g. HCM City Regional Depot" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Latitude</label>
+                <input id="ckp-lat" type="text" class="input" placeholder="10.8231" />
+              </div>
+              <div class="form-group">
+                <label>Longitude</label>
+                <input id="ckp-lng" type="text" class="input" placeholder="106.6297" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Handler Notes (optional — not stored on-chain)</label>
+              <textarea id="ckp-notes" placeholder="e.g. Received 500 cartons, 3 damaged in transit"></textarea>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--green" onclick="submitCheckpoint()">
+              📍&ensp;Submit Checkpoint
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ALL BATCHES TAB ===== -->
+      <div id="tab-batches" style="display: none;">
+        <h2 class="dashboard__title">All Batches</h2>
+        <p class="dashboard__subtitle">Complete inventory of on-chain batch registrations</p>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+          <input type="text" class="input" placeholder="Search by Batch ID or product name…" style="max-width: 360px;" />
+          <select style="width: auto;">
+            <option>All Statuses</option>
+            <option>Registered</option>
+            <option>In Transit</option>
+            <option>Delivered</option>
+            <option>Near Expiry</option>
+          </select>
+          <select style="width: auto;">
+            <option>All Factories</option>
+            <option>Bình Dương #2</option>
+            <option>HCM Plant #1</option>
+            <option>Hà Nội #3</option>
+            <option>Lâm Đồng</option>
+          </select>
+        </div>
+
+        <div class="data-table-wrapper">
+          <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch ID</th>
+                <th>Product</th>
+                <th>Factory</th>
+                <th>Produced</th>
+                <th>Expiry</th>
+                <th>Units</th>
+                <th>Scans</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">0x3a9f…e4c2</td>
+                <td>Vinamilk Sure Prevent Gold</td>
+                <td>Bình Dương #2</td>
+                <td>2026-01-10</td>
+                <td>2027-02-15</td>
+                <td>10,000</td>
+                <td><span class="scan-count scan-count--normal">3</span></td>
+                <td><span class="badge badge--green">Delivered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x7c12…b3a1</td>
+                <td>Dermablock BB Sun Cream</td>
+                <td>HCM Plant #1</td>
+                <td>2026-02-05</td>
+                <td>2027-06-30</td>
+                <td>5,000</td>
+                <td><span class="scan-count scan-count--warning">847</span></td>
+                <td><span class="badge badge--amber">⚠ Flagged</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x5e8a…d7f3</td>
+                <td>Vinamilk Dielac Alpha Gold</td>
+                <td>Bình Dương #2</td>
+                <td>2026-01-22</td>
+                <td>2027-01-20</td>
+                <td>8,000</td>
+                <td><span class="scan-count scan-count--normal">12</span></td>
+                <td><span class="badge badge--green">Delivered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x2bf1…94e6</td>
+                <td>Vinamilk Sure Prevent Gold</td>
+                <td>Hà Nội #3</td>
+                <td>2026-03-01</td>
+                <td>2027-04-10</td>
+                <td>10,000</td>
+                <td><span class="scan-count scan-count--normal">1</span></td>
+                <td><span class="badge badge--blue">In Transit</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x9d4c…f1a8</td>
+                <td>Dermablock Gentle Cleanser</td>
+                <td>HCM Plant #1</td>
+                <td>2026-04-18</td>
+                <td>2027-08-22</td>
+                <td>3,000</td>
+                <td><span class="scan-count scan-count--normal">0</span></td>
+                <td><span class="badge badge--purple">Registered</span></td>
+              </tr>
+              <tr>
+                <td class="mono">0x6fab…28d5</td>
+                <td>Vinamilk Organic Gold</td>
+                <td>Lâm Đồng</td>
+                <td>2025-11-10</td>
+                <td>2026-12-01</td>
+                <td>6,000</td>
+                <td><span class="scan-count scan-count--normal">27</span></td>
+                <td><span class="badge badge--amber">Near Expiry</span></td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ACTIVITY LOG TAB ===== -->
+      <div id="tab-activity" style="display: none;">
+        <h2 class="dashboard__title">Activity Log</h2>
+        <p class="dashboard__subtitle">Real-time on-chain transaction events</p>
+
+        <div class="result__card" style="max-width: 100%;">
+          <div class="result__card-body">
+            <div class="timeline">
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__content">
+                  <div class="timeline__title">Batch Registered — Dermablock Gentle Cleanser</div>
+                  <div class="timeline__meta">
+                    <span>📅 2026-05-15 09:12 UTC</span>
+                    <span>🔑 0x7A3b…F92d (Manufacturer)</span>
+                    <span>⛽ 0.0014 MATIC</span>
+                    <span>Tx: 0xf8e1…3c72</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__content">
+                  <div class="timeline__title">Checkpoint — Vinamilk Sure Prevent Gold → HCM Regional Depot</div>
+                  <div class="timeline__meta">
+                    <span>📅 2026-05-14 14:48 UTC</span>
+                    <span>🔑 0x9Fd2…C78b (Distributor)</span>
+                    <span>⛽ 0.0008 MATIC</span>
+                    <span>Tx: 0xa4b2…9d15</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__content">
+                  <div class="timeline__title" style="color: var(--accent-amber);">⚠ Anomaly Flag — Dermablock BB Sun Cream</div>
+                  <div class="timeline__meta">
+                    <span>📅 2026-05-14 11:03 UTC</span>
+                    <span>Scan threshold breached (847 scans)</span>
+                    <span>Auto-flagged by contract</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__content">
+                  <div class="timeline__title">Checkpoint — Dermablock BB Sun Cream → Delivered to Retail</div>
+                  <div class="timeline__meta">
+                    <span>📅 2026-05-13 16:22 UTC</span>
+                    <span>🔑 0x1Ae5…D94f (Retailer)</span>
+                    <span>⛽ 0.0008 MATIC</span>
+                    <span>Tx: 0xc7d3…a8f1</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="timeline__item">
+                <div class="timeline__dot"></div>
+                <div class="timeline__content">
+                  <div class="timeline__title">Batch Registered — Vinamilk Sure Prevent Gold (Hà Nội)</div>
+                  <div class="timeline__meta">
+                    <span>📅 2026-05-12 08:30 UTC</span>
+                    <span>🔑 0x7A3b…F92d (Manufacturer)</span>
+                    <span>⛽ 0.0014 MATIC</span>
+                    <span>Tx: 0xe5a9…b4c2</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ===== TRANSACTION MODAL ===== -->
+  <div id="txModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 40px; max-width: 460px; width: 90%; text-align: center;">
+      <div id="txPending">
+        <div style="width: 64px; height: 64px; border: 3px solid var(--border-light); border-top-color: var(--accent-purple); border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px;" id="txPendingTitle">Confirm Transaction</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;" id="txPendingMsg">Waiting for wallet confirmation…</p>
+        <p style="color: var(--text-tertiary); font-size: 0.78rem; font-family: var(--font-mono);" id="txPendingInfo">Submitting to Polygon Amoy…</p>
+      </div>
+      <div id="txSuccess" style="display: none;">
+        <div style="width: 64px; height: 64px; background: var(--accent-green-glow); border: 2px solid var(--accent-green); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent-green-light);">✓</div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px; color: var(--accent-green-light);">Transaction Confirmed</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px;">Successfully recorded on Polygon Amoy</p>
+        <p style="color: var(--text-tertiary); font-size: 0.78rem; font-family: var(--font-mono); margin-bottom: 20px; word-break: break-all;" id="txSuccessInfo">Tx: …</p>
+        <button class="btn btn--outline btn--sm" onclick="closeTxModal()">Close</button>
+      </div>
+      <div id="txError" style="display: none;">
+        <div style="width: 64px; height: 64px; background: rgba(239,68,68,0.12); border: 2px solid var(--accent-red); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent-red-light);">✕</div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px; color: var(--accent-red-light);">Transaction Failed</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; word-break: break-word;" id="txErrorInfo">Error</p>
+        <button class="btn btn--outline btn--sm" onclick="closeTxModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/contract.js"></script>
+  <script>
+    /* Tab Switching */
+    function showTab(tabName) {
+      const tabs = ['overview', 'register', 'checkpoint', 'batches', 'activity'];
+      tabs.forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if (el) el.style.display = t === tabName ? 'block' : 'none';
+      });
+
+      document.querySelectorAll('.sidebar__link').forEach(link => {
+        link.classList.remove('active');
+      });
+      if (event && event.currentTarget && event.currentTarget.classList.contains('sidebar__link')) {
+        event.currentTarget.classList.add('active');
+      }
+
+      document.querySelectorAll('.admin-mobile-tabs button').forEach((btn, i) => {
+        btn.classList.toggle('active', tabs[i] === tabName);
+      });
+    }
+
+    function toggleMenu() {
+      document.getElementById('hamburger').classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+
+    /* Wallet */
+    async function toggleWallet() {
+      const btn = document.getElementById('connectWallet');
+      if (btn.classList.contains('wallet-btn--connected')) {
+        btn.classList.remove('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
+        PROVENLEDGER.signer = null;
+        PROVENLEDGER.address = null;
+        return;
+      }
+      try {
+        const addr = await PROVENLEDGER.connectWallet();
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(addr) + '</span>';
+      } catch (err) {
+        alert(err.message || err);
+      }
+    }
+
+    /* Transaction Modal helpers */
+    function openTxModal(title, msg) {
+      document.getElementById('txPendingTitle').textContent = title || 'Confirm Transaction';
+      document.getElementById('txPendingMsg').textContent = msg || 'Waiting for wallet confirmation…';
+      document.getElementById('txPendingInfo').textContent = 'Submitting to Polygon Amoy…';
+      document.getElementById('txPending').style.display = 'block';
+      document.getElementById('txSuccess').style.display = 'none';
+      document.getElementById('txError').style.display = 'none';
+      document.getElementById('txModal').style.display = 'flex';
+    }
+
+    function setTxPendingInfo(info) {
+      document.getElementById('txPendingInfo').textContent = info;
+    }
+
+    function showTxSuccess(receipt, extraHtml) {
+      const cfg = window.PROVENLEDGER_CONFIG;
+      const txUrl = cfg.EXPLORER_BASE + '/tx/' + receipt.hash;
+      let html = 'Tx: <a href="' + txUrl + '" target="_blank" style="color:var(--accent-purple-light);">'
+        + PROVENLEDGER.shortHash(receipt.hash) + '</a> &middot; Block #' + receipt.blockNumber;
+      if (extraHtml) html += '<br>' + extraHtml;
+      document.getElementById('txSuccessInfo').innerHTML = html;
+      document.getElementById('txPending').style.display = 'none';
+      document.getElementById('txSuccess').style.display = 'block';
+      document.getElementById('txError').style.display = 'none';
+    }
+
+    function showTxError(err) {
+      document.getElementById('txErrorInfo').textContent = err.reason || err.shortMessage || err.message || String(err);
+      document.getElementById('txPending').style.display = 'none';
+      document.getElementById('txSuccess').style.display = 'none';
+      document.getElementById('txError').style.display = 'block';
+    }
+
+    function closeTxModal() {
+      document.getElementById('txModal').style.display = 'none';
+    }
+
+    document.getElementById('txModal').addEventListener('click', function(e) {
+      if (e.target === this) closeTxModal();
+    });
+
+    /* Helpers */
+    function val(id) { return (document.getElementById(id).value || '').trim(); }
+    function dateToUnix(yyyy_mm_dd) {
+      if (!yyyy_mm_dd) return 0;
+      const t = new Date(yyyy_mm_dd + 'T00:00:00Z').getTime();
+      return Math.floor(t / 1000);
+    }
+
+    /* Register Batch — calls contract.registerBatch */
+    async function submitRegister() {
+      const productName = val('reg-product-name');
+      const factory     = val('reg-factory');
+      const category    = val('reg-category');
+      const notes       = val('reg-notes');
+      const prodDate    = dateToUnix(val('reg-prod-date'));
+      const expiryDate  = dateToUnix(val('reg-expiry-date'));
+      const unitCount   = parseInt(val('reg-unit-count') || '0', 10);
+
+      if (!productName) return alert('Vui lòng nhập Product Name.');
+      if (!factory)     return alert('Vui lòng chọn Factory.');
+      if (!unitCount)   return alert('Units in Batch phải > 0.');
+      if (!prodDate || !expiryDate || expiryDate <= prodDate) {
+        return alert('Ngày sản xuất / hết hạn không hợp lệ (expiry phải sau production).');
+      }
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); }
+        catch (e) { return alert(e.message || e); }
+        // Reflect connection on the wallet button
+        const btn = document.getElementById('connectWallet');
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+      }
+
+      const batchId = PROVENLEDGER.makeBatchId(productName);
+      const metadataURI = JSON.stringify({ productName: productName, category: category, notes: notes });
+
+      openTxModal('Register Batch', 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const tx = await contract.registerBatch(batchId, factory, prodDate, expiryDate, unitCount, metadataURI);
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
+        const receipt = await tx.wait();
+        const batchExtra = 'Batch ID: <span title="' + batchId + '" style="cursor:pointer;" onclick="navigator.clipboard.writeText(\'' + batchId + '\')">'
+          + PROVENLEDGER.shortHash(batchId) + '</span> (click to copy)';
+        showTxSuccess(receipt, batchExtra);
+        // Pre-fill checkpoint form with the just-created batchId for convenience
+        document.getElementById('ckp-batch-id').value = batchId;
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+
+    /* Add Checkpoint — calls contract.addCheckpoint */
+    async function submitCheckpoint() {
+      const batchId      = val('ckp-batch-id');
+      const status       = val('ckp-status');
+      const locationName = val('ckp-location-name');
+      const lat          = val('ckp-lat');
+      const lng          = val('ckp-lng');
+
+      if (!batchId || !batchId.startsWith('0x') || batchId.length !== 66) {
+        return alert('Batch ID phải là chuỗi hex 32 bytes (0x… 66 ký tự).');
+      }
+      if (!locationName) return alert('Vui lòng nhập Location Name.');
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); }
+        catch (e) { return alert(e.message || e); }
+        const btn = document.getElementById('connectWallet');
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+      }
+
+      const location = PROVENLEDGER.packLocation(locationName, lat, lng);
+
+      openTxModal('Submit Checkpoint', 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const tx = await contract.addCheckpoint(batchId, location, status);
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
+        const receipt = await tx.wait();
+        showTxSuccess(receipt, 'Status: ' + status + '<br>Location: ' + location);
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+  </script>
+</body>
+</html>

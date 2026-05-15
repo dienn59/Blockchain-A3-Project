@@ -85,40 +85,48 @@ Copy `.env.example` to `.env` and fill in your keys before deploying to a live n
 
 ---
 
-## Test UI
+## DApp Frontend
 
-A minimal browser interface in `frontend-test/` lets you interact with a deployed contract
-without writing any additional code.
+The browser UI lives in `public/` and is split into three pages:
+
+- `public/index.html` — landing page (project overview)
+- `public/scan.html` — consumer Scan & Verify (read-only, no wallet required)
+- `public/admin.html` — manufacturer Dashboard (Register Batch, Add Checkpoint)
+
+Shared assets:
+
+- `public/assets/css/styles.css` — global stylesheet
+- `public/assets/js/config.js` — frontend configuration (contract address, network, RPC)
+- `public/assets/js/contract.js` — ABI + ethers v6 wallet helpers
 
 ### Steps
 
-1. Start a local Hardhat node and deploy the contract:
+1. Deploy the contract (Polygon Amoy or local Hardhat node):
 
    ```bash
+   # Local
    npx hardhat node
-   # in another terminal:
    npx hardhat run scripts/deploy.js --network localhost
-   # note the contract address printed in the output
+
+   # Polygon Amoy testnet
+   npx hardhat run scripts/deploy.js --network polygonAmoy
    ```
 
-2. Add the Hardhat localhost network to MetaMask:
-   - RPC URL: `http://127.0.0.1:8545`
-   - Chain ID: `31337`
-   - Currency: ETH
+2. Paste the deployed address into `public/assets/js/config.js`
+   (`CONTRACT_ADDRESS` field). Adjust `EXPECTED_CHAIN_ID` and `PUBLIC_RPC` if
+   targeting a different network.
 
-3. Import a Hardhat test account into MetaMask using one of the private keys printed
-   by `npx hardhat node` (Account #0 is the admin; grant yourself MANUFACTURER\_ROLE
-   from the deploy script or Hardhat console).
+3. Open `public/index.html` directly in your browser (no server needed),
+   or serve the `public/` folder with any static host.
 
-4. Open `frontend-test/index.html` directly in your browser (no server needed):
-   - On Windows: drag the file into Chrome/Edge, or use `File > Open`.
+4. Use the dApp:
+   - **Scan & Verify** — paste a Batch ID (or scan its QR code) to read the
+     on-chain record. Read-only, no wallet required.
+   - **Dashboard** — click **Connect Wallet** (MetaMask), then **Register
+     Batch** or **Add Checkpoint** to write to the contract.
 
-5. In the UI:
-   - Click **Connect MetaMask** and approve the connection.
-   - Paste the deployed contract address and click **Load Contract**.
-   - Use **Register Batch** to create a batch (Batch ID auto-generates if left blank).
-   - Use **Record Scan** to simulate a consumer scan.
-   - Use **Query Scan Count** to read the on-chain scan count for any unit.
+> Manufacturer actions require the wallet to hold `MANUFACTURER_ROLE`.
+> Grant it from the deploy script or Hardhat console before testing writes.
 
 ---
 
@@ -126,15 +134,20 @@ without writing any additional code.
 
 ```
 contracts/
-  ProvenLedgerVN.sol   — main smart contract
+  ProvenLedgerVN.sol     — main smart contract
 scripts/
-  deploy.js            — deployment script
-  benchmark.js         — gas benchmark script
+  deploy.js              — deployment script
+  benchmark.js           — gas benchmark script
 test/
-  ProvenLedgerVN.js    — Hardhat/Chai unit tests
-frontend-test/
-  index.html           — minimal test UI
-  app.js               — ethers.js v6 frontend logic
+  ProvenLedgerVN.js      — Hardhat/Chai unit tests
+public/
+  index.html             — landing page
+  scan.html              — consumer Scan & Verify (read-only)
+  admin.html             — manufacturer Dashboard
+  assets/
+    css/styles.css       — global stylesheet
+    js/config.js         — contract address + network config
+    js/contract.js       — ABI + ethers v6 wallet helpers
 hardhat.config.js
 .env.example
 ```
