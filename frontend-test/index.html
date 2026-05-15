@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ProvenLedgerVN — Test UI</title>
+  <style>
+    body { font-family: monospace; max-width: 700px; margin: 30px auto; padding: 0 16px; }
+    h1 { font-size: 1.2rem; }
+    h2 { font-size: 1rem; margin-top: 2rem; border-bottom: 1px solid #ccc; }
+    label { display: block; margin-top: 8px; font-size: 0.85rem; }
+    input { width: 100%; box-sizing: border-box; padding: 4px; font-family: monospace; font-size: 0.85rem; }
+    button { margin-top: 10px; padding: 6px 14px; cursor: pointer; }
+    #status { margin-top: 6px; font-size: 0.8rem; color: #555; }
+    .result { background: #f4f4f4; padding: 8px; margin-top: 8px; font-size: 0.8rem; word-break: break-all; white-space: pre-wrap; }
+    .error { color: red; }
+    .ok { color: green; }
+  </style>
+</head>
+<body>
+  <h1>ProvenLedgerVN — Local Test UI</h1>
+  <p style="font-size:0.85rem">Connect a local Hardhat account via MetaMask (network: <strong>localhost:8545</strong>).</p>
+
+  <h2>1. Connect Wallet</h2>
+  <button id="connectBtn">Connect MetaMask</button>
+  <div id="walletInfo" class="result" style="display:none"></div>
+
+  <h2>2. Load Contract</h2>
+  <label>Contract address (from deploy output)</label>
+  <input id="contractAddr" placeholder="0x..." />
+  <button id="loadBtn">Load Contract</button>
+  <div id="contractStatus" class="result" style="display:none"></div>
+
+  <h2>3. Register Batch</h2>
+  <label>Batch ID (hex, 32 bytes — leave blank to auto-generate)</label>
+  <input id="regBatchId" placeholder="0x... or leave empty" />
+  <label>Origin</label>
+  <input id="regOrigin" value="Vinamilk Factory - Binh Duong" />
+  <label>Production Date (Unix timestamp — leave blank for now)</label>
+  <input id="regProdDate" placeholder="e.g. 1700000000" />
+  <label>Expiry Date (Unix timestamp)</label>
+  <input id="regExpiry" placeholder="e.g. 1715000000" />
+  <label>Unit Count</label>
+  <input id="regUnitCount" value="1000" />
+  <label>Metadata URI (optional)</label>
+  <input id="regMetaURI" value="ipfs://placeholder" />
+  <button id="registerBtn">Register Batch</button>
+  <div id="registerResult" class="result" style="display:none"></div>
+
+  <h2>4. Record Scan</h2>
+  <label>Batch ID (hex)</label>
+  <input id="scanBatchId" placeholder="0x..." />
+  <label>Unit Index (0-based)</label>
+  <input id="scanUnitIndex" value="0" />
+  <label>Location (free text — will be hashed, or leave blank)</label>
+  <input id="scanLocation" placeholder="e.g. 10.7769,106.7009" />
+  <button id="scanBtn">Record Scan</button>
+  <div id="scanResult" class="result" style="display:none"></div>
+
+  <h2>5. Query Scan Count</h2>
+  <label>Batch ID (hex)</label>
+  <input id="queryScanBatchId" placeholder="0x..." />
+  <label>Unit Index</label>
+  <input id="queryScanIndex" value="0" />
+  <button id="queryBtn">Get Scan Info</button>
+  <div id="queryResult" class="result" style="display:none"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
