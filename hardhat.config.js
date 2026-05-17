@@ -34,10 +34,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: {
-      polygon: POLYGONSCAN_API_KEY,
-      polygonAmoy: POLYGONSCAN_API_KEY,
-    },
+    apiKey: POLYGONSCAN_API_KEY,
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS === "true",
