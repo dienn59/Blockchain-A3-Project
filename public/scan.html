@@ -356,7 +356,26 @@
       return d.toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
     }
 
-    /* Main lookup — calls getBatch + getCheckpoints and renders the result. */
+    const ANOMALY_THRESHOLD = 10;
+
+    // Attempts to record this consumer scan on-chain. Non-blocking: silently
+    // skips if no wallet is connected (consumers without MetaMask are unaffected).
+    async function tryRecordScan(batchId, unitIndex) {
+      try {
+        if (!window.ethereum) return;
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.listAccounts();
+        if (!accounts || accounts.length === 0) return;
+        const signer = await provider.getSigner();
+        const cfg = window.PROVENLEDGER_CONFIG;
+        const wContract = new ethers.Contract(cfg.CONTRACT_ADDRESS, window.PROVENLEDGER_ABI, signer);
+        await wContract.recordScan(batchId, unitIndex, ethers.ZeroHash);
+      } catch (e) {
+        console.debug('recordScan skipped:', e.message);
+      }
+    }
+
+    /* Main lookup — calls getBatch + getCheckpoints + getUnitScan and renders the result. */
     async function lookupBatch() {
       const batchId = (document.getElementById('batchIdInput').value || '').trim();
       if (!batchId.startsWith('0x') || batchId.length !== 66) {
@@ -374,14 +393,19 @@
         const exists = await contract.batchExists(batchId);
         if (!exists) { showResult('failed'); return; }
 
-        const [batch, checkpoints] = await Promise.all([
+        const [batch, checkpoints, unitScan] = await Promise.all([
           contract.getBatch(batchId),
           contract.getCheckpoints(batchId),
+          contract.getUnitScan(batchId, 0).catch(() => null),
         ]);
 
         const now = Math.floor(Date.now() / 1000);
         const isExpired = Number(batch.expiryDate) < now;
-        renderBatch(batchId, batch, checkpoints, isExpired);
+        const scanCount = unitScan ? Number(unitScan.count) : 0;
+        const isAnomaly = !isExpired && scanCount > ANOMALY_THRESHOLD;
+
+        renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly);
+        tryRecordScan(batchId, 0); // fire-and-forget; fails silently without a wallet
         showResult('verified');
       } catch (err) {
         console.error(err);
@@ -389,21 +413,33 @@
       }
     }
 
-    function renderBatch(batchId, batch, checkpoints, isExpired) {
-      // Banner state
+    function renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly) {
+      // Banner state — three cases: anomaly, expired, verified
       const status = document.getElementById('rv-status');
-      status.classList.toggle('result__status--verified', !isExpired);
-      status.classList.toggle('result__status--failed', isExpired);
-      document.getElementById('rv-status-icon').textContent = isExpired ? '⏰' : '✓';
-      document.getElementById('rv-status-title').textContent = isExpired ? 'Product Expired' : 'Verified Authentic';
-      document.getElementById('rv-status-desc').textContent = isExpired
-        ? 'The batch is genuine on-chain, but the expiry date has passed. Do not consume.'
-        : "This product's on-chain record is intact and all checkpoints are valid.";
+      status.className = 'result__status ' + (
+        isAnomaly  ? 'result__status--warning' :
+        isExpired  ? 'result__status--failed'  :
+                     'result__status--verified'
+      );
+      document.getElementById('rv-status-icon').textContent = isAnomaly ? '⚠' : isExpired ? '⏰' : '✓';
+      document.getElementById('rv-status-title').textContent =
+        isAnomaly ? 'Anomaly Detected' : isExpired ? 'Product Expired' : 'Verified Authentic';
+      document.getElementById('rv-status-desc').textContent = isAnomaly
+        ? 'This Batch ID has an unusually high scan count. The QR code may have been cloned onto counterfeit units.'
+        : isExpired
+          ? 'The batch is genuine on-chain, but the expiry date has passed. Do not consume.'
+          : "This product's on-chain record is intact and all checkpoints are valid.";
 
       const badge = document.getElementById('rv-product-badge');
-      badge.textContent = isExpired ? 'Expired' : 'On-Chain';
-      badge.classList.toggle('badge--green', !isExpired);
-      badge.classList.toggle('badge--red', isExpired);
+      badge.className = 'badge ' + (isAnomaly ? 'badge--amber' : isExpired ? 'badge--red' : 'badge--green');
+      badge.textContent = isAnomaly ? 'Review' : isExpired ? 'Expired' : 'On-Chain';
+
+      // Live scan count for unit 0
+      const scanRow = document.getElementById('rv-scan-row');
+      const scanCountEl = document.getElementById('rv-scan-count');
+      scanRow.style.display = '';
+      scanCountEl.textContent = scanCount + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (scanCount !== 1 ? 's' : ''));
+      scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
 
       // Try parse metadataURI as JSON for productName/category
       let productName = '(unnamed product)';

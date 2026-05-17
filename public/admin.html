@@ -88,11 +88,11 @@
       </a>
 
       <span class="sidebar__section-label">Settings</span>
-      <a href="#" class="sidebar__link">
+      <a href="#" class="sidebar__link" onclick="showTab('roles')">
         <span class="sidebar__link-icon">⚙️</span>
         Roles &amp; Access
       </a>
-      <a href="#" class="sidebar__link">
+      <a href="#" class="sidebar__link" onclick="showTab('config')">
         <span class="sidebar__link-icon">🔑</span>
         Contract Config
       </a>
@@ -148,54 +148,12 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td class="mono">0x3a9f…e4c2</td>
-                <td>Vinamilk Sure Prevent Gold</td>
-                <td>Bình Dương #2</td>
-                <td>2027-02-15</td>
-                <td>4</td>
-                <td><span class="badge badge--green">Delivered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x7c12…b3a1</td>
-                <td>Dermablock BB Sun Cream</td>
-                <td>HCM Plant #1</td>
-                <td>2027-06-30</td>
-                <td>3</td>
-                <td><span class="badge badge--blue">In Transit</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x5e8a…d7f3</td>
-                <td>Vinamilk Dielac Alpha Gold</td>
-                <td>Bình Dương #2</td>
-                <td>2027-01-20</td>
-                <td>4</td>
-                <td><span class="badge badge--green">Delivered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x2bf1…94e6</td>
-                <td>Vinamilk Sure Prevent Gold</td>
-                <td>Hà Nội Plant #3</td>
-                <td>2027-04-10</td>
-                <td>2</td>
-                <td><span class="badge badge--blue">In Transit</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x9d4c…f1a8</td>
-                <td>Dermablock Gentle Cleanser</td>
-                <td>HCM Plant #1</td>
-                <td>2027-08-22</td>
-                <td>1</td>
-                <td><span class="badge badge--purple">Registered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x6fab…28d5</td>
-                <td>Vinamilk Organic Gold</td>
-                <td>Lâm Đồng Plant</td>
-                <td>2026-12-01</td>
-                <td>4</td>
-                <td><span class="badge badge--amber">Near Expiry</span></td>
+            <tbody id="recent-batches-body">
+              <tr id="dashboard-loading">
+                <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                  <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border-light);border-top-color:var(--accent-purple);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>
+                  Loading on-chain data…
+                </td>
               </tr>
             </tbody>
           </table>
@@ -331,21 +289,8 @@
         <p class="dashboard__subtitle">Complete inventory of on-chain batch registrations</p>
 
         <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
-          <input type="text" class="input" placeholder="Search by Batch ID or product name…" style="max-width: 360px;" />
-          <select style="width: auto;">
-            <option>All Statuses</option>
-            <option>Registered</option>
-            <option>In Transit</option>
-            <option>Delivered</option>
-            <option>Near Expiry</option>
-          </select>
-          <select style="width: auto;">
-            <option>All Factories</option>
-            <option>Bình Dương #2</option>
-            <option>HCM Plant #1</option>
-            <option>Hà Nội #3</option>
-            <option>Lâm Đồng</option>
-          </select>
+          <input type="text" class="input" placeholder="Search by Batch ID or product name…"
+            style="max-width: 360px;" oninput="filterAllBatches(this.value)" />
         </div>
 
         <div class="data-table-wrapper">
@@ -363,66 +308,11 @@
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="all-batches-body">
               <tr>
-                <td class="mono">0x3a9f…e4c2</td>
-                <td>Vinamilk Sure Prevent Gold</td>
-                <td>Bình Dương #2</td>
-                <td>2026-01-10</td>
-                <td>2027-02-15</td>
-                <td>10,000</td>
-                <td><span class="scan-count scan-count--normal">3</span></td>
-                <td><span class="badge badge--green">Delivered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x7c12…b3a1</td>
-                <td>Dermablock BB Sun Cream</td>
-                <td>HCM Plant #1</td>
-                <td>2026-02-05</td>
-                <td>2027-06-30</td>
-                <td>5,000</td>
-                <td><span class="scan-count scan-count--warning">847</span></td>
-                <td><span class="badge badge--amber">⚠ Flagged</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x5e8a…d7f3</td>
-                <td>Vinamilk Dielac Alpha Gold</td>
-                <td>Bình Dương #2</td>
-                <td>2026-01-22</td>
-                <td>2027-01-20</td>
-                <td>8,000</td>
-                <td><span class="scan-count scan-count--normal">12</span></td>
-                <td><span class="badge badge--green">Delivered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x2bf1…94e6</td>
-                <td>Vinamilk Sure Prevent Gold</td>
-                <td>Hà Nội #3</td>
-                <td>2026-03-01</td>
-                <td>2027-04-10</td>
-                <td>10,000</td>
-                <td><span class="scan-count scan-count--normal">1</span></td>
-                <td><span class="badge badge--blue">In Transit</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x9d4c…f1a8</td>
-                <td>Dermablock Gentle Cleanser</td>
-                <td>HCM Plant #1</td>
-                <td>2026-04-18</td>
-                <td>2027-08-22</td>
-                <td>3,000</td>
-                <td><span class="scan-count scan-count--normal">0</span></td>
-                <td><span class="badge badge--purple">Registered</span></td>
-              </tr>
-              <tr>
-                <td class="mono">0x6fab…28d5</td>
-                <td>Vinamilk Organic Gold</td>
-                <td>Lâm Đồng</td>
-                <td>2025-11-10</td>
-                <td>2026-12-01</td>
-                <td>6,000</td>
-                <td><span class="scan-count scan-count--normal">27</span></td>
-                <td><span class="badge badge--amber">Near Expiry</span></td>
+                <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                  Loading on-chain data…
+                </td>
               </tr>
             </tbody>
           </table>
@@ -437,72 +327,52 @@
 
         <div class="result__card" style="max-width: 100%;">
           <div class="result__card-body">
-            <div class="timeline">
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__content">
-                  <div class="timeline__title">Batch Registered — Dermablock Gentle Cleanser</div>
-                  <div class="timeline__meta">
-                    <span>📅 2026-05-15 09:12 UTC</span>
-                    <span>🔑 0x7A3b…F92d (Manufacturer)</span>
-                    <span>⛽ 0.0014 MATIC</span>
-                    <span>Tx: 0xf8e1…3c72</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__content">
-                  <div class="timeline__title">Checkpoint — Vinamilk Sure Prevent Gold → HCM Regional Depot</div>
-                  <div class="timeline__meta">
-                    <span>📅 2026-05-14 14:48 UTC</span>
-                    <span>🔑 0x9Fd2…C78b (Distributor)</span>
-                    <span>⛽ 0.0008 MATIC</span>
-                    <span>Tx: 0xa4b2…9d15</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__content">
-                  <div class="timeline__title" style="color: var(--accent-amber);">⚠ Anomaly Flag — Dermablock BB Sun Cream</div>
-                  <div class="timeline__meta">
-                    <span>📅 2026-05-14 11:03 UTC</span>
-                    <span>Scan threshold breached (847 scans)</span>
-                    <span>Auto-flagged by contract</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__content">
-                  <div class="timeline__title">Checkpoint — Dermablock BB Sun Cream → Delivered to Retail</div>
-                  <div class="timeline__meta">
-                    <span>📅 2026-05-13 16:22 UTC</span>
-                    <span>🔑 0x1Ae5…D94f (Retailer)</span>
-                    <span>⛽ 0.0008 MATIC</span>
-                    <span>Tx: 0xc7d3…a8f1</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="timeline__item">
-                <div class="timeline__dot"></div>
-                <div class="timeline__content">
-                  <div class="timeline__title">Batch Registered — Vinamilk Sure Prevent Gold (Hà Nội)</div>
-                  <div class="timeline__meta">
-                    <span>📅 2026-05-12 08:30 UTC</span>
-                    <span>🔑 0x7A3b…F92d (Manufacturer)</span>
-                    <span>⛽ 0.0014 MATIC</span>
-                    <span>Tx: 0xe5a9…b4c2</span>
-                  </div>
-                </div>
-              </div>
+            <div class="timeline" id="activity-timeline">
+              <p style="color:var(--text-secondary);text-align:center;padding:24px 0;">Loading on-chain activity…</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ===== ROLES & ACCESS TAB ===== -->
+      <div id="tab-roles" style="display: none;">
+        <h2 class="dashboard__title">Roles &amp; Access</h2>
+        <p class="dashboard__subtitle">Grant or revoke MANUFACTURER_ROLE on the deployed contract</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>⚙️ Role Management</h3>
+            <p>Only ADMIN_ROLE holders can modify roles. Connect your admin wallet first.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Target Wallet Address</label>
+              <input id="role-address" type="text" class="input" placeholder="0x… address to grant or revoke the role on" />
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="role-select">
+                <option value="MANUFACTURER_ROLE">MANUFACTURER_ROLE — register batches &amp; add checkpoints</option>
+                <option value="ADMIN_ROLE">ADMIN_ROLE — manage roles &amp; add checkpoints to any batch</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--primary" onclick="submitGrantRole()">⊕&ensp;Grant Role</button>
+            <button class="btn btn--sm" style="background:rgba(239,68,68,0.1);color:var(--accent-red-light);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);padding:8px 16px;cursor:pointer;font-size:0.875rem;" onclick="submitRevokeRole()">⊖&ensp;Revoke Role</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CONTRACT CONFIG TAB ===== -->
+      <div id="tab-config" style="display: none;">
+        <h2 class="dashboard__title">Contract Config</h2>
+        <p class="dashboard__subtitle">Deployment details for the ProvenLedgerVN smart contract</p>
+
+        <div class="result__card" style="max-width: 680px;">
+          <div class="result__card-header"><h4>🔑&ensp;Deployment Info</h4></div>
+          <div class="result__card-body" id="config-info-body"></div>
         </div>
       </div>
 
@@ -538,29 +408,77 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    @keyframes rowFadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
   <script src="assets/js/config.js"></script>
   <script src="assets/js/contract.js"></script>
+  <script src="assets/js/dashboard.js"></script>
   <script>
-    /* Tab Switching */
+    /* Prepend a live batch row to the Recent Batches table after a successful registration. */
+    function prependRecentBatch(batchId, productName, factory, expiryUnix) {
+      const tbody = document.getElementById('recent-batches-body');
+      if (!tbody) return;
+
+      const expiryStr = new Date(expiryUnix * 1000).toISOString().slice(0, 10);
+      const shortId   = PROVENLEDGER.shortHash(batchId);
+
+      const tr = document.createElement('tr');
+      tr.style.animation = 'rowFadeIn 0.45s ease';
+
+      // Batch ID — click to copy full hex; turns green briefly to confirm copy
+      const tdId = document.createElement('td');
+      tdId.className   = 'mono';
+      tdId.title       = batchId;
+      tdId.style.cursor = 'pointer';
+      tdId.textContent  = shortId + ' 📋';
+      tdId.onclick = function () {
+        navigator.clipboard.writeText(batchId).then(function () {
+          tdId.style.color = 'var(--accent-green-light)';
+          setTimeout(function () { tdId.style.color = ''; }, 2000);
+        });
+      };
+
+      const tdProduct     = document.createElement('td');
+      tdProduct.textContent = productName;
+
+      const tdFactory     = document.createElement('td');
+      tdFactory.textContent = factory;
+
+      const tdExpiry      = document.createElement('td');
+      tdExpiry.textContent  = expiryStr;
+
+      const tdCp          = document.createElement('td');
+      tdCp.textContent      = '0';
+
+      const tdStatus      = document.createElement('td');
+      tdStatus.innerHTML    = '<span class="badge badge--purple">Registered</span>';
+
+      tr.append(tdId, tdProduct, tdFactory, tdExpiry, tdCp, tdStatus);
+      tbody.insertBefore(tr, tbody.firstChild);
+    }
+
+    /* Tab Switching — handles any tab ID dynamically */
     function showTab(tabName) {
-      const tabs = ['overview', 'register', 'checkpoint', 'batches', 'activity'];
-      tabs.forEach(t => {
-        const el = document.getElementById('tab-' + t);
-        if (el) el.style.display = t === tabName ? 'block' : 'none';
+      document.querySelectorAll('[id^="tab-"]').forEach(function (el) {
+        el.style.display = el.id === 'tab-' + tabName ? 'block' : 'none';
       });
 
-      document.querySelectorAll('.sidebar__link').forEach(link => {
+      document.querySelectorAll('.sidebar__link').forEach(function (link) {
         link.classList.remove('active');
       });
       if (event && event.currentTarget && event.currentTarget.classList.contains('sidebar__link')) {
         event.currentTarget.classList.add('active');
       }
 
-      document.querySelectorAll('.admin-mobile-tabs button').forEach((btn, i) => {
-        btn.classList.toggle('active', tabs[i] === tabName);
+      // Mobile tabs only covers the original five
+      const mobileTabs = ['overview', 'register', 'checkpoint', 'batches', 'activity'];
+      document.querySelectorAll('.admin-mobile-tabs button').forEach(function (btn, i) {
+        btn.classList.toggle('active', mobileTabs[i] === tabName);
       });
     }
 
@@ -631,6 +549,41 @@
       if (e.target === this) closeTxModal();
     });
 
+    /* Roles & Access */
+    async function submitGrantRole()  { await _roleAction('grantRole',  'Grant');  }
+    async function submitRevokeRole() { await _roleAction('revokeRole', 'Revoke'); }
+
+    async function _roleAction(method, label) {
+      const address  = val('role-address');
+      const roleName = val('role-select');
+      if (!ethers.isAddress(address)) return alert('Invalid wallet address.');
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); } catch (e) { return alert(e.message || e); }
+        const btn = document.getElementById('connectWallet');
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+      }
+      try { await PROVENLEDGER.ensureCorrectNetwork(); } catch (e) { return alert(e.message || e); }
+
+      openTxModal(label + ' ' + roleName, 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const roleId   = await contract[roleName]();
+        const tx       = await contract[method](roleId, address, {
+          maxPriorityFeePerGas: ethers.parseUnits('25', 'gwei'),
+          maxFeePerGas:         ethers.parseUnits('30', 'gwei'),
+          gasLimit: 100_000,
+        });
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting…');
+        const receipt = await tx.wait();
+        showTxSuccess(receipt, label + 'd ' + roleName + ' → ' + PROVENLEDGER.shortAddr(address));
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+
     /* Helpers */
     function val(id) { return (document.getElementById(id).value || '').trim(); }
     function dateToUnix(yyyy_mm_dd) {
@@ -659,25 +612,60 @@
       if (!PROVENLEDGER.signer) {
         try { await PROVENLEDGER.connectWallet(); }
         catch (e) { return alert(e.message || e); }
-        // Reflect connection on the wallet button
         const btn = document.getElementById('connectWallet');
         btn.classList.add('wallet-btn--connected');
         btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
           + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
       }
 
+      // Guard against a stale signer created on the wrong network.
+      // ensureCorrectNetwork() switches to Polygon Amoy and rebuilds the signer if needed.
+      try { await PROVENLEDGER.ensureCorrectNetwork(); }
+      catch (e) { return alert(e.message || e); }
+
       const batchId = PROVENLEDGER.makeBatchId(productName);
       const metadataURI = JSON.stringify({ productName: productName, category: category, notes: notes });
+
+      // Pre-flight: verify MANUFACTURER_ROLE so we surface a clear message instead
+      // of the opaque "missing revert data" that AccessControl produces on failure.
+      try {
+        const rc     = PROVENLEDGER.getReadContract();
+        const roleId = await rc.MANUFACTURER_ROLE();
+        const ok     = await rc.hasRole(roleId, PROVENLEDGER.address);
+        if (!ok) {
+          return alert(
+            '⛔ Wallet ' + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + ' does not have MANUFACTURER_ROLE.\n\n' +
+            'Grant it from the deployer account:\n' +
+            '  npx hardhat run scripts/grant-role.cjs --network polygonAmoy\n\n' +
+            'Or use the wallet that deployed the contract.'
+          );
+        }
+      } catch (roleErr) {
+        console.warn('Role pre-flight skipped (RPC issue):', roleErr.message);
+      }
 
       openTxModal('Register Batch', 'Waiting for wallet signature…');
       try {
         const contract = PROVENLEDGER.getWriteContract();
-        const tx = await contract.registerBatch(batchId, factory, prodDate, expiryDate, unitCount, metadataURI);
+        const tx = await contract.registerBatch(batchId, factory, prodDate, expiryDate, unitCount, metadataURI, {
+          maxPriorityFeePerGas: ethers.parseUnits("25", "gwei"),
+          maxFeePerGas:         ethers.parseUnits("30", "gwei"),
+          gasLimit:             300_000,
+        });
         setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
         const receipt = await tx.wait();
         const batchExtra = 'Batch ID: <span title="' + batchId + '" style="cursor:pointer;" onclick="navigator.clipboard.writeText(\'' + batchId + '\')">'
           + PROVENLEDGER.shortHash(batchId) + '</span> (click to copy)';
         showTxSuccess(receipt, batchExtra);
+        // Push to all three dashboard tabs (Recent Batches, All Batches, Activity Log)
+        if (typeof pushToDashboard === 'function') {
+          pushToDashboard({
+            batchId: batchId, productName: productName, origin: factory,
+            expiryDate: expiryDate, productionDate: prodDate,
+            unitCount: unitCount, metadataURI: metadataURI,
+            manufacturer: PROVENLEDGER.address || '',
+          });
+        }
         // Pre-fill checkpoint form with the just-created batchId for convenience
         document.getElementById('ckp-batch-id').value = batchId;
       } catch (err) {
@@ -707,12 +695,19 @@
           + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
       }
 
+      try { await PROVENLEDGER.ensureCorrectNetwork(); }
+      catch (e) { return alert(e.message || e); }
+
       const location = PROVENLEDGER.packLocation(locationName, lat, lng);
 
       openTxModal('Submit Checkpoint', 'Waiting for wallet signature…');
       try {
         const contract = PROVENLEDGER.getWriteContract();
-        const tx = await contract.addCheckpoint(batchId, location, status);
+        const tx = await contract.addCheckpoint(batchId, location, status, {
+          maxPriorityFeePerGas: ethers.parseUnits("25", "gwei"),
+          maxFeePerGas:         ethers.parseUnits("30", "gwei"),
+          gasLimit:             200_000,
+        });
         setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
         const receipt = await tx.wait();
         showTxSuccess(receipt, 'Status: ' + status + '<br>Location: ' + location);
