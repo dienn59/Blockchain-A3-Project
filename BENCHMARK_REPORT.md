@@ -3,7 +3,7 @@
 **Project:** ProvenLedgerVN — FMCG Provenance & Anti-Counterfeit Ledger
 **Contract:** `contracts/ProvenLedgerVN.sol` (Solidity 0.8.24, optimizer 200 runs)
 **Script:** `scripts/benchmark.js`
-**Date:** 2026-05-16
+**Date:** 2026-05-18 (re-verified — figures unchanged from prior run)
 **Network:** Hardhat in-process EVM (Polygon-equivalent execution semantics)
 
 This report addresses the lecturer's feedback on *blockchain economics and fees at scale* and the

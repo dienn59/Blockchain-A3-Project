@@ -61,7 +61,7 @@
         <div style="text-align:center;margin-bottom:28px;">
           <button class="btn btn--primary btn--sm" id="startCameraBtn" onclick="startCamera()">📷&ensp;Start Camera Scanner</button>
           <button class="btn btn--ghost btn--sm" id="stopCameraBtn" onclick="stopCamera()" style="display:none;">■&ensp;Stop Camera</button>
-          <p style="color:var(--text-tertiary);font-size:0.78rem;margin-top:8px;">Camera access required for live scanning. Your camera feed stays on your device.</p>
+          <p id="cameraHint" style="color:var(--text-tertiary);font-size:0.78rem;margin-top:8px;">Camera access required for live scanning. Your camera feed stays on your device.</p>
         </div>
 
         <div class="scanner__manual">
@@ -274,37 +274,66 @@
   <script>
     /* QR Scanner — uses html5-qrcode library */
     let html5QrCode = null;
+    let _scanHandled = false; // debounce: one trigger per camera session
 
     function startCamera() {
+      if (html5QrCode) return;
+      _scanHandled = false;
       const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-      html5QrCode = new Html5Qrcode("qr-reader");
-      html5QrCode.start(
-        { facingMode: "environment" },
-        config,
-        onScanSuccess,
-        onScanFailure
-      ).then(() => {
+
+      function onStarted() {
         document.getElementById('startCameraBtn').style.display = 'none';
         document.getElementById('stopCameraBtn').style.display = 'inline-flex';
-      }).catch(err => {
-        alert("Camera access denied or unavailable.\nPlease use the manual Batch ID input instead.");
-        console.error("Camera error:", err);
-      });
-    }
-
-    function stopCamera() {
-      if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          html5QrCode.clear();
-          document.getElementById('startCameraBtn').style.display = 'inline-flex';
-          document.getElementById('stopCameraBtn').style.display = 'none';
-        });
+        const hint = document.getElementById('cameraHint');
+        hint.textContent = 'Camera active — hold a QR code up to the webcam to scan automatically.';
+        hint.style.color = 'var(--accent-green-light)';
       }
+
+      function tryStart(constraints) {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        return html5QrCode.start(constraints, config, onScanSuccess, onScanFailure);
+      }
+
+      // Try rear camera first (phones); fall back to front/any camera (laptop webcam)
+      tryStart({ facingMode: "environment" })
+        .then(onStarted)
+        .catch(() => {
+          try { html5QrCode.clear(); } catch (e) {}
+          tryStart({ facingMode: "user" })
+            .then(onStarted)
+            .catch(err => {
+              try { html5QrCode.clear(); } catch (e) {}
+              html5QrCode = null;
+              alert("Camera access denied or unavailable.\nPlease use the manual Batch ID input instead.");
+              console.error("Camera error:", err);
+            });
+        });
     }
 
-    function onScanSuccess(decodedText) {
-      stopCamera();
-      // QR payload may be a URL (?batchId=0x…&unit=N) or the raw batchId.
+    async function stopCamera() {
+      if (!html5QrCode) return;
+      const instance = html5QrCode;
+      html5QrCode = null;
+      try { await instance.stop(); } catch (e) { /* already stopped */ }
+      try { instance.clear(); } catch (e) {}
+      document.getElementById('startCameraBtn').style.display = 'inline-flex';
+      document.getElementById('stopCameraBtn').style.display = 'none';
+      const hint = document.getElementById('cameraHint');
+      hint.textContent = 'Camera access required for live scanning. Your camera feed stays on your device.';
+      hint.style.color = '';
+    }
+
+    async function onScanSuccess(decodedText) {
+      if (_scanHandled) return;
+      _scanHandled = true;
+
+      const hint = document.getElementById('cameraHint');
+      hint.textContent = 'QR code detected! Looking up batch...';
+      hint.style.color = 'var(--accent-green-light)';
+
+      await stopCamera();
+
+      // QR payload may be a URL (?batchId=0x…&unit=N) or the raw batchId
       let batchId = decodedText;
       try {
         const url = new URL(decodedText);
@@ -316,7 +345,7 @@
       lookupBatch();
     }
 
-    function onScanFailure() { /* scanning in progress */ }
+    function onScanFailure() { /* scanning in progress — no-op */ }
 
     /* View switching logic */
     const allResults = ['scannerView','resultVerified','resultWarning','resultExpired','resultFailed'];
