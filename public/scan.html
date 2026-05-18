@@ -185,7 +185,7 @@
             <div class="result__row"><span class="result__row-label">Product Name</span><span class="result__row-value">Vinamilk Organic Gold 900g</span></div>
             <div class="result__row"><span class="result__row-label">Batch ID</span><span class="result__row-value result__row-value--mono">0x6fab29c1…28d5</span></div>
             <div class="result__row"><span class="result__row-label">Manufacturer</span><span class="result__row-value">Vinamilk JSC</span></div>
-            <div class="result__row"><span class="result__row-label">Factory</span><span class="result__row-value">Lâm Đồng Plant</span></div>
+            <div class="result__row"><span class="result__row-label">Factory</span><span class="result__row-value">Lam Dong Plant</span></div>
             <div class="result__row"><span class="result__row-label">Production Date</span><span class="result__row-value">2024-11-10</span></div>
             <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value" style="color:var(--accent-red-light);font-weight:700;">2025-12-01 — EXPIRED</span></div>
             <div class="result__row"><span class="result__row-label">Days Past Expiry</span><span class="result__row-value"><span class="scan-count scan-count--danger">166 days overdue</span></span></div>
@@ -209,10 +209,10 @@
           <div class="result__card-header"><h4>🗺️&ensp;Supply Chain Journey</h4><span class="badge badge--green">Authentic — 4 Checkpoints</span></div>
           <div class="result__card-body">
             <div class="timeline">
-              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Batch Registered — Lâm Đồng Plant</div><div class="timeline__meta"><span>📅 2024-11-10 07:45 UTC</span><span>🔑 0x7A3b…F92d</span></div></div></div>
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Batch Registered — Lam Dong Plant</div><div class="timeline__meta"><span>📅 2024-11-10 07:45 UTC</span><span>🔑 0x7A3b…F92d</span></div></div></div>
               <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Shipped — Central Hub, Long An</div><div class="timeline__meta"><span>📅 2024-11-12 13:20 UTC</span><span>🔑 0x4Bc8…A31e</span></div></div></div>
               <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Arrived — HCM City Regional Depot</div><div class="timeline__meta"><span>📅 2024-11-14 09:10 UTC</span><span>🔑 0x9Fd2…C78b</span></div></div></div>
-              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Delivered — CoopMart Lê Văn Sỹ, Tân Bình</div><div class="timeline__meta"><span>📅 2024-11-16 06:55 UTC</span><span>🔑 0x1Ae5…D94f</span></div></div></div>
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Delivered — CoopMart Le Van Sy, Tan Binh</div><div class="timeline__meta"><span>📅 2024-11-16 06:55 UTC</span><span>🔑 0x1Ae5…D94f</span></div></div></div>
             </div>
           </div>
         </div>
@@ -408,7 +408,7 @@
     async function lookupBatch() {
       const batchId = (document.getElementById('batchIdInput').value || '').trim();
       if (!batchId.startsWith('0x') || batchId.length !== 66) {
-        return alert('Batch ID phải là chuỗi hex 32 bytes (0x… 66 ký tự).');
+        return alert('Batch ID must be a 32-byte hex string (0x… 66 characters).');
       }
 
       let contract;

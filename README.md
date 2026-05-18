@@ -10,7 +10,7 @@ registrations and per-unit scan counts to detect counterfeit QR codes.
 
 - Node.js >= 18
 - npm >= 9
-- MetaMask browser extension (for the test UI)
+- MetaMask browser extension (for Dashboard access)
 
 ---
 
@@ -67,21 +67,21 @@ Results are printed as formatted tables. Override assumptions with env vars:
 GAS_PRICE_GWEI=30 MATIC_USD=0.40 npx hardhat run scripts/benchmark.js --network localhost
 ```
 
-Saved benchmark output lives in `BENCHMARK_REPORT.md`.
-
 ---
 
 ## Deploy
 
 ```bash
 # Local Hardhat node (start node first — see above)
-npx hardhat run scripts/deploy.js --network localhost
+npx hardhat run scripts/deploy.cjs --network localhost
 
 # Polygon Amoy testnet (requires .env)
-npx hardhat run scripts/deploy.js --network polygonAmoy
+npx hardhat run scripts/deploy.cjs --network polygonAmoy
 ```
 
 Copy `.env.example` to `.env` and fill in your keys before deploying to a live network.
+
+The deploy script automatically grants `MANUFACTURER_ROLE` to the deployer address for convenience during development.
 
 ---
 
@@ -91,25 +91,39 @@ The browser UI lives in `public/` and is split into three pages:
 
 - `public/index.html` — landing page (project overview)
 - `public/scan.html` — consumer Scan & Verify (read-only, no wallet required)
-- `public/admin.html` — manufacturer Dashboard (Register Batch, Add Checkpoint)
+- `public/admin.html` — Dashboard for Manufacturers and Admins (role-gated)
 
 Shared assets:
 
 - `public/assets/css/styles.css` — global stylesheet
 - `public/assets/js/config.js` — frontend configuration (contract address, network, RPC)
-- `public/assets/js/contract.js` — ABI + ethers v6 wallet helpers
+- `public/assets/js/contract.js` — ABI + ethers v6 wallet helpers (includes `getRoleLabel`)
+- `public/assets/js/dashboard.js` — on-chain event fetching and dashboard data rendering
 
-### Steps
+### Role-Based Access
 
-1. Deploy the contract (Polygon Amoy or local Hardhat node):
+The Dashboard enforces role-based access on page load:
+
+| Role | Access |
+|---|---|
+| **Admin** | Full dashboard — register batches, add checkpoints, grant/revoke roles |
+| **Manufacturer** | Full dashboard — register batches, add checkpoints for own batches |
+| **Consumer** | Redirected to `scan.html` — read-only verification only |
+
+Roles are determined on-chain via OpenZeppelin `AccessControl`. Identity is the connected
+MetaMask wallet address — no login or account registration required.
+
+### Setup Steps
+
+1. Deploy the contract:
 
    ```bash
    # Local
    npx hardhat node
-   npx hardhat run scripts/deploy.js --network localhost
+   npx hardhat run scripts/deploy.cjs --network localhost
 
    # Polygon Amoy testnet
-   npx hardhat run scripts/deploy.js --network polygonAmoy
+   npx hardhat run scripts/deploy.cjs --network polygonAmoy
    ```
 
 2. Paste the deployed address into `public/assets/js/config.js`
@@ -120,13 +134,22 @@ Shared assets:
    or serve the `public/` folder with any static host.
 
 4. Use the dApp:
-   - **Scan & Verify** — paste a Batch ID (or scan its QR code) to read the
-     on-chain record. Read-only, no wallet required.
-   - **Dashboard** — click **Connect Wallet** (MetaMask), then **Register
-     Batch** or **Add Checkpoint** to write to the contract.
+   - **Scan & Verify** — paste a Batch ID or scan a QR code to read the on-chain
+     record. Read-only, no wallet required.
+   - **Dashboard** — connect a MetaMask wallet with `MANUFACTURER_ROLE` or
+     `ADMIN_ROLE` to register batches, add checkpoints, and manage roles.
 
-> Manufacturer actions require the wallet to hold `MANUFACTURER_ROLE`.
-> Grant it from the deploy script or Hardhat console before testing writes.
+### QR Code Format
+
+The scanner accepts two formats:
+
+```
+Raw Batch ID:   0x83196d4d75cc7d8d896a3713f6ae822ceba101978798867d501ce115c2c88267
+URL parameter:  https://yourdomain.com/scan.html?batchId=0x83196d4d...
+```
+
+To test: register a batch in the Dashboard, copy the Batch ID, generate a QR code from
+it using any online QR generator, then scan it with `scan.html`.
 
 ---
 
@@ -134,20 +157,22 @@ Shared assets:
 
 ```
 contracts/
-  ProvenLedgerVN.sol     — main smart contract
+  ProvenLedgerVN.sol       — main smart contract (AccessControl, batch + checkpoint + scan)
 scripts/
-  deploy.js              — deployment script
-  benchmark.js           — gas benchmark script
+  deploy.cjs               — deployment + role setup script
+  benchmark.js             — gas benchmark script
+  simulate.cjs             — anomaly detection simulation (pushes scan count above threshold)
 test/
-  ProvenLedgerVN.js      — Hardhat/Chai unit tests
+  ProvenLedgerVN.js        — Hardhat/Chai unit tests
 public/
-  index.html             — landing page
-  scan.html              — consumer Scan & Verify (read-only)
-  admin.html             — manufacturer Dashboard
+  index.html               — landing page
+  scan.html                — consumer Scan & Verify (read-only)
+  admin.html               — manufacturer/admin Dashboard (role-gated)
   assets/
-    css/styles.css       — global stylesheet
-    js/config.js         — contract address + network config
-    js/contract.js       — ABI + ethers v6 wallet helpers
+    css/styles.css         — global stylesheet
+    js/config.js           — contract address + network config
+    js/contract.js         — ABI + ethers v6 wallet helpers
+    js/dashboard.js        — dashboard data loader (localStorage + on-chain events)
 hardhat.config.js
 .env.example
 ```

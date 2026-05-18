@@ -154,4 +154,20 @@ window.PROVENLEDGER = {
     if (lat && lng) return `${name} (${lat},${lng})`;
     return name;
   },
+
+  async getRoleLabel(address) {
+    try {
+      const rc = this.getReadContract();
+      const [adminId, mfgId] = await Promise.all([rc.ADMIN_ROLE(), rc.MANUFACTURER_ROLE()]);
+      const [isAdmin, isMfg] = await Promise.all([
+        rc.hasRole(adminId, address),
+        rc.hasRole(mfgId, address),
+      ]);
+      if (isAdmin) return 'admin';
+      if (isMfg) return 'manufacturer';
+      return 'consumer';
+    } catch (e) {
+      return 'consumer';
+    }
+  },
 };

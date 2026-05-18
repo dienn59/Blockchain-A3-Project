@@ -25,6 +25,7 @@
           <span class="navbar__network-dot"></span>
           Polygon Amoy
         </div>
+        <span id="roleBadge" style="display:none;"></span>
         <button class="wallet-btn" id="connectWallet" onclick="toggleWallet()">
           <span class="wallet-btn__icon">◆</span>
           Connect Wallet
@@ -189,10 +190,10 @@
             <div class="form-group">
               <label>Factory Location</label>
               <select id="reg-factory">
-                <option>Bình Dương Plant #2</option>
+                <option>Binh Duong Plant #2</option>
                 <option>HCM Plant #1</option>
-                <option>Hà Nội Plant #3</option>
-                <option>Lâm Đồng Plant</option>
+                <option>Ha Noi Plant #3</option>
+                <option>Lam Dong Plant</option>
               </select>
             </div>
 
@@ -495,6 +496,8 @@
         btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
         PROVENLEDGER.signer = null;
         PROVENLEDGER.address = null;
+        const badge = document.getElementById('roleBadge');
+        if (badge) badge.style.display = 'none';
         return;
       }
       try {
@@ -502,8 +505,35 @@
         btn.classList.add('wallet-btn--connected');
         btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
           + PROVENLEDGER.shortAddr(addr) + '</span>';
+        _applyRoleGuard(addr);
       } catch (err) {
         alert(err.message || err);
+      }
+    }
+
+    async function _applyRoleGuard(addr) {
+      let role = 'consumer';
+      try { role = await PROVENLEDGER.getRoleLabel(addr); } catch (e) { /* RPC issue — default consumer */ }
+
+      const badge = document.getElementById('roleBadge');
+      if (badge) {
+        const styleMap = {
+          admin:        'background:rgba(139,92,246,0.15);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3);',
+          manufacturer: 'background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);',
+          consumer:     'background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);',
+        };
+        const labelMap = { admin: 'Admin', manufacturer: 'Manufacturer', consumer: 'Consumer' };
+        badge.style.cssText = 'display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;' + styleMap[role];
+        badge.textContent = labelMap[role];
+      }
+
+      if (role === 'consumer') {
+        const overlay = document.getElementById('consumerOverlay');
+        if (overlay) overlay.style.display = 'flex';
+        setTimeout(function () { window.location.href = 'scan.html'; }, 3000);
+      } else {
+        const gate = document.getElementById('walletGate');
+        if (gate) gate.style.display = 'none';
       }
     }
 
@@ -602,11 +632,11 @@
       const expiryDate  = dateToUnix(val('reg-expiry-date'));
       const unitCount   = parseInt(val('reg-unit-count') || '0', 10);
 
-      if (!productName) return alert('Vui lòng nhập Product Name.');
-      if (!factory)     return alert('Vui lòng chọn Factory.');
-      if (!unitCount)   return alert('Units in Batch phải > 0.');
+      if (!productName) return alert('Please enter a Product Name.');
+      if (!factory)     return alert('Please select a Factory.');
+      if (!unitCount)   return alert('Units in Batch must be greater than 0.');
       if (!prodDate || !expiryDate || expiryDate <= prodDate) {
-        return alert('Ngày sản xuất / hết hạn không hợp lệ (expiry phải sau production).');
+        return alert('Invalid dates — Expiry Date must be after Production Date.');
       }
 
       if (!PROVENLEDGER.signer) {
@@ -682,9 +712,9 @@
       const lng          = val('ckp-lng');
 
       if (!batchId || !batchId.startsWith('0x') || batchId.length !== 66) {
-        return alert('Batch ID phải là chuỗi hex 32 bytes (0x… 66 ký tự).');
+        return alert('Batch ID must be a 32-byte hex string (0x… 66 characters).');
       }
-      if (!locationName) return alert('Vui lòng nhập Location Name.');
+      if (!locationName) return alert('Please enter a Location Name.');
 
       if (!PROVENLEDGER.signer) {
         try { await PROVENLEDGER.connectWallet(); }
@@ -697,6 +727,12 @@
 
       try { await PROVENLEDGER.ensureCorrectNetwork(); }
       catch (e) { return alert(e.message || e); }
+
+      let _ckpRole = 'consumer';
+      try { _ckpRole = await PROVENLEDGER.getRoleLabel(PROVENLEDGER.address); } catch (e) {}
+      if (_ckpRole === 'consumer') {
+        return alert('⛔ This wallet has Consumer access only.\nOnly Manufacturers or Admins can add checkpoints.');
+      }
 
       const location = PROVENLEDGER.packLocation(locationName, lat, lng);
 
@@ -716,5 +752,27 @@
       }
     }
   </script>
+  <!-- Wallet Gate Overlay (shown on page load until wallet is connected) -->
+  <div id="walletGate" style="display:flex;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.92);backdrop-filter:blur(14px);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <div style="text-align:center;max-width:420px;padding:0 24px;">
+      <div style="width:64px;height:64px;background:rgba(139,92,246,0.15);border:2px solid rgba(139,92,246,0.4);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;">◆</div>
+      <h2 style="color:white;font-family:var(--font-body);margin-bottom:8px;">Connect Wallet to Continue</h2>
+      <p style="color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.6;font-size:0.9rem;">Dashboard access is restricted to Manufacturers and Admins. Please connect your MetaMask wallet to verify your role.</p>
+      <button class="btn btn--primary" onclick="toggleWallet()" style="padding:12px 32px;font-size:1rem;">
+        <span style="margin-right:8px;">◆</span> Connect MetaMask
+      </button>
+    </div>
+  </div>
+
+  <!-- Consumer Access Guard Overlay -->
+  <div id="consumerOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <div style="text-align:center;max-width:420px;padding:0 24px;">
+      <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+      <h2 style="color:white;font-family:var(--font-body);margin-bottom:8px;">Access Restricted</h2>
+      <p style="color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6;">This wallet has <strong style="color:#94a3b8;">Consumer</strong> access only. The Dashboard is restricted to Manufacturers and Admins.</p>
+      <p style="color:rgba(255,255,255,0.35);font-size:0.82rem;margin-bottom:20px;">Redirecting to Scan &amp; Verify…</p>
+      <a href="scan.html" style="display:inline-block;padding:10px 24px;background:var(--accent-purple);color:white;border-radius:var(--radius-sm);text-decoration:none;font-size:0.9rem;font-weight:500;">Go to Scan &amp; Verify →</a>
+    </div>
+  </div>
 </body>
 </html>
