@@ -1,5 +1,5 @@
 // ProvenLedgerVN — Frontend configuration.
-// After running `npx hardhat run scripts/deploy.js --network polygonAmoy`,
+// After running `npx hardhat run scripts/deploy.cjs --network polygonAmoy`,
 // paste the deployed contract address into CONTRACT_ADDRESS below.
 window.PROVENLEDGER_CONFIG = {
   CONTRACT_ADDRESS: "0x1f3E1F2e15e30f4F37CEf17FFa6f68b6E24d4709",

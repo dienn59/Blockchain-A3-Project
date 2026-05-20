@@ -2,6 +2,10 @@
 // Depends on ethers v6 (UMD bundle loaded before this script) and config.js.
 
 window.PROVENLEDGER_ABI = [
+  // ── Events ────────────────────────────────────────────────────────────────
+  "event BatchRegistered(bytes32 indexed batchId, address indexed manufacturer, uint32 unitCount, uint64 productionDate, uint64 expiryDate, string origin, string metadataURI)",
+  "event CheckpointAdded(bytes32 indexed batchId, uint256 indexed sequence, address indexed actor, uint64 timestamp, string location, string status)",
+  "event UnitScanned(bytes32 indexed batchId, uint32 indexed unitIndex, address indexed scanner, uint32 newCount, uint64 timestamp, bytes32 locationHash)",
   // ── Write functions ────────────────────────────────────────────────────────
   "function registerBatch(bytes32 batchId, string origin, uint64 productionDate, uint64 expiryDate, uint32 unitCount, string metadataURI) external",
   "function addCheckpoint(bytes32 batchId, string location, string status) external",
@@ -39,6 +43,7 @@ window.PROVENLEDGER = {
   provider: null,
   signer: null,
   address: null,
+  _walletListenersBound: false,
 
   _cfg() {
     const cfg = window.PROVENLEDGER_CONFIG;
@@ -58,7 +63,10 @@ window.PROVENLEDGER = {
     const cfg = this._cfg();
     const hexChainId = '0x' + cfg.EXPECTED_CHAIN_ID.toString(16);
     const current = await window.ethereum.request({ method: 'eth_chainId' });
-    if (BigInt(current) === cfg.EXPECTED_CHAIN_ID) return; // already on correct chain
+    if (BigInt(current) === cfg.EXPECTED_CHAIN_ID) {
+      if (this.signer || this.address) await this._refreshSigner();
+      return; // already on correct chain
+    }
 
     try {
       await window.ethereum.request({
@@ -83,10 +91,27 @@ window.PROVENLEDGER = {
       }
     }
 
-    // Rebuild provider + signer so they reflect the newly active chain
+    await this._refreshSigner();
+  },
+
+  async _refreshSigner() {
     this.provider = new ethers.BrowserProvider(window.ethereum);
     this.signer = await this.provider.getSigner();
     this.address = await this.signer.getAddress();
+    return this.address;
+  },
+
+  _clearWalletState() {
+    this.signer = null;
+    this.address = null;
+    this.provider = null;
+  },
+
+  _bindWalletListeners() {
+    if (!window.ethereum || this._walletListenersBound) return;
+    window.ethereum.on('chainChanged', () => this._clearWalletState());
+    window.ethereum.on('accountsChanged', () => this._clearWalletState());
+    this._walletListenersBound = true;
   },
 
   async connectWallet() {
@@ -100,18 +125,8 @@ window.PROVENLEDGER = {
     // Switch to Polygon Amoy if on a different network
     await this.ensureCorrectNetwork();
 
-    // Always build a fresh provider + signer on the (now correct) chain
-    this.provider = new ethers.BrowserProvider(window.ethereum);
-    this.signer = await this.provider.getSigner();
-    this.address = await this.signer.getAddress();
-
-    // If the user manually switches networks while the page is open, clear the
-    // stale signer so the next transaction re-triggers this flow.
-    window.ethereum.on('chainChanged', () => {
-      this.signer = null;
-      this.address = null;
-      this.provider = null;
-    });
+    await this._refreshSigner();
+    this._bindWalletListeners();
 
     return this.address;
   },

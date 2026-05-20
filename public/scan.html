@@ -111,6 +111,7 @@
             <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value" id="rv-expiry-date">—</span></div>
             <div class="result__row"><span class="result__row-label">Units in Batch</span><span class="result__row-value" id="rv-unit-count">—</span></div>
             <div class="result__row" id="rv-scan-row" style="display:none;"><span class="result__row-label">Scan Count</span><span class="result__row-value"><span class="scan-count scan-count--normal" id="rv-scan-count">—</span></span></div>
+            <div class="result__row" id="rv-record-scan-row" style="display:none;"><span class="result__row-label">On-Chain Scan</span><span class="result__row-value"><button class="btn btn--ghost btn--sm" id="rv-record-scan-btn" onclick="recordCurrentScanOnChain()">Record Scan</button></span></div>
           </div>
         </div>
 
@@ -386,21 +387,42 @@
     }
 
     const ANOMALY_THRESHOLD = 10;
+    let currentVerifiedBatchId = '';
+    let currentVerifiedUnitIndex = 0;
 
-    // Attempts to record this consumer scan on-chain. Non-blocking: silently
-    // skips if no wallet is connected (consumers without MetaMask are unaffected).
-    async function tryRecordScan(batchId, unitIndex) {
+    // Optional write action. Verification itself is read-only; recording a scan
+    // changes contract state and therefore requires a wallet transaction.
+    async function recordScanOnChain(batchId, unitIndex) {
+      if (!window.ethereum) {
+        throw new Error('MetaMask is required only when recording a scan on-chain.');
+      }
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      const signer = await provider.getSigner();
+      const cfg = window.PROVENLEDGER_CONFIG;
+      const wContract = new ethers.Contract(cfg.CONTRACT_ADDRESS, window.PROVENLEDGER_ABI, signer);
+      const tx = await wContract.recordScan(batchId, unitIndex, ethers.ZeroHash);
+      return tx.wait();
+    }
+
+    async function recordCurrentScanOnChain() {
+      if (!currentVerifiedBatchId) return;
+      const btn = document.getElementById('rv-record-scan-btn');
+      const original = btn ? btn.textContent : 'Record Scan';
       try {
-        if (!window.ethereum) return;
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.listAccounts();
-        if (!accounts || accounts.length === 0) return;
-        const signer = await provider.getSigner();
-        const cfg = window.PROVENLEDGER_CONFIG;
-        const wContract = new ethers.Contract(cfg.CONTRACT_ADDRESS, window.PROVENLEDGER_ABI, signer);
-        await wContract.recordScan(batchId, unitIndex, ethers.ZeroHash);
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Recording…';
+        }
+        await recordScanOnChain(currentVerifiedBatchId, currentVerifiedUnitIndex);
+        if (btn) btn.textContent = 'Recorded';
+        await lookupBatch();
       } catch (e) {
-        console.debug('recordScan skipped:', e.message);
+        alert(e.reason || e.shortMessage || e.message || e);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = original;
+        }
       }
     }
 
@@ -434,7 +456,6 @@
         const isAnomaly = !isExpired && scanCount > ANOMALY_THRESHOLD;
 
         renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly);
-        tryRecordScan(batchId, 0); // fire-and-forget; fails silently without a wallet
         showResult('verified');
       } catch (err) {
         console.error(err);
@@ -443,6 +464,9 @@
     }
 
     function renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly) {
+      currentVerifiedBatchId = batchId;
+      currentVerifiedUnitIndex = 0;
+
       // Banner state — three cases: anomaly, expired, verified
       const status = document.getElementById('rv-status');
       status.className = 'result__status ' + (
@@ -469,6 +493,13 @@
       scanRow.style.display = '';
       scanCountEl.textContent = scanCount + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (scanCount !== 1 ? 's' : ''));
       scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
+      const recordRow = document.getElementById('rv-record-scan-row');
+      const recordBtn = document.getElementById('rv-record-scan-btn');
+      if (recordRow) recordRow.style.display = '';
+      if (recordBtn) {
+        recordBtn.disabled = false;
+        recordBtn.textContent = 'Record Scan';
+      }
 
       // Try parse metadataURI as JSON for productName/category
       let productName = '(unnamed product)';

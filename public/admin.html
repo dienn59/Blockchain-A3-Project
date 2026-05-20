@@ -89,7 +89,7 @@
       </a>
 
       <span class="sidebar__section-label">Settings</span>
-      <a href="#" class="sidebar__link" onclick="showTab('roles')">
+      <a href="#" class="sidebar__link" id="rolesNavLink" onclick="showTab('roles')" style="display:none;">
         <span class="sidebar__link-icon">⚙️</span>
         Roles &amp; Access
       </a>
@@ -111,23 +111,19 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-card__label">Total Batches</div>
-            <div class="stat-card__value" style="color: var(--accent-purple-light);">1,247</div>
-            <div class="stat-card__change stat-card__change--up">↑ 12% this month</div>
+            <div class="stat-card__value" id="stat-total-batches" style="color: var(--accent-purple-light);">0</div>
           </div>
           <div class="stat-card">
             <div class="stat-card__label">Active Checkpoints</div>
-            <div class="stat-card__value" style="color: var(--accent-green-light);">4,893</div>
-            <div class="stat-card__change stat-card__change--up">↑ 8% this month</div>
+            <div class="stat-card__value" id="stat-active-checkpoints" style="color: var(--accent-green-light);">0</div>
           </div>
           <div class="stat-card">
-            <div class="stat-card__label">Consumer Scans</div>
-            <div class="stat-card__value" style="color: var(--accent-blue);">32,410</div>
-            <div class="stat-card__change stat-card__change--up">↑ 23% this month</div>
+            <div class="stat-card__label">On-Chain Scans</div>
+            <div class="stat-card__value" id="stat-consumer-scans" style="color: var(--accent-blue);">0</div>
           </div>
           <div class="stat-card">
             <div class="stat-card__label">Anomaly Flags</div>
-            <div class="stat-card__value" style="color: var(--accent-amber);">7</div>
-            <div class="stat-card__change stat-card__change--down">↓ 2 from last month</div>
+            <div class="stat-card__value" id="stat-anomaly-flags" style="color: var(--accent-amber);">0</div>
           </div>
         </div>
 
@@ -146,12 +142,13 @@
                 <th>Factory</th>
                 <th>Expiry</th>
                 <th>Checkpoints</th>
+                <th>Scans</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody id="recent-batches-body">
               <tr id="dashboard-loading">
-                <td colspan="6" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                <td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
                   <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border-light);border-top-color:var(--accent-purple);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>
                   Loading on-chain data…
                 </td>
@@ -338,12 +335,12 @@
       <!-- ===== ROLES & ACCESS TAB ===== -->
       <div id="tab-roles" style="display: none;">
         <h2 class="dashboard__title">Roles &amp; Access</h2>
-        <p class="dashboard__subtitle">Grant or revoke MANUFACTURER_ROLE on the deployed contract</p>
+        <p class="dashboard__subtitle">Admin-only role management on the deployed contract</p>
 
         <div class="form-panel">
           <div class="form-panel__header">
             <h3>⚙️ Role Management</h3>
-            <p>Only ADMIN_ROLE holders can modify roles. Connect your admin wallet first.</p>
+            <p>Only Admin wallets can grant or revoke MANUFACTURER_ROLE. Granting or revoking ADMIN_ROLE itself requires DEFAULT_ADMIN_ROLE.</p>
           </div>
           <div class="form-panel__body">
             <div class="form-group">
@@ -354,7 +351,7 @@
               <label>Role</label>
               <select id="role-select">
                 <option value="MANUFACTURER_ROLE">MANUFACTURER_ROLE — register batches &amp; add checkpoints</option>
-                <option value="ADMIN_ROLE">ADMIN_ROLE — manage roles &amp; add checkpoints to any batch</option>
+                <option value="ADMIN_ROLE">ADMIN_ROLE — add checkpoints to any batch; grantable only by default admin</option>
               </select>
             </div>
           </div>
@@ -420,6 +417,44 @@
   <script src="assets/js/contract.js"></script>
   <script src="assets/js/dashboard.js"></script>
   <script>
+    let currentDashboardRole = 'guest';
+
+    function setRolesAccessVisible(visible) {
+      const rolesNavLink = document.getElementById('rolesNavLink');
+      if (rolesNavLink) rolesNavLink.style.display = visible ? '' : 'none';
+      if (!visible && document.getElementById('tab-roles').style.display !== 'none') {
+        showTab('overview');
+      }
+    }
+
+    function setConnectedWalletButton(address) {
+      const btn = document.getElementById('connectWallet');
+      if (!btn) return;
+      btn.classList.add('wallet-btn--connected');
+      btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+        + PROVENLEDGER.shortAddr(address) + '</span>';
+    }
+
+    function resetDashboardSession() {
+      const btn = document.getElementById('connectWallet');
+      if (btn) {
+        btn.classList.remove('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
+      }
+      PROVENLEDGER.signer = null;
+      PROVENLEDGER.address = null;
+      PROVENLEDGER.provider = null;
+      currentDashboardRole = 'guest';
+      setRolesAccessVisible(false);
+      const badge = document.getElementById('roleBadge');
+      if (badge) badge.style.display = 'none';
+    }
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', resetDashboardSession);
+      window.ethereum.on('chainChanged', resetDashboardSession);
+    }
+
     /* Prepend a live batch row to the Recent Batches table after a successful registration. */
     function prependRecentBatch(batchId, productName, factory, expiryUnix) {
       const tbody = document.getElementById('recent-batches-body');
@@ -465,6 +500,11 @@
 
     /* Tab Switching — handles any tab ID dynamically */
     function showTab(tabName) {
+      if (tabName === 'roles' && currentDashboardRole !== 'admin') {
+        alert('⛔ Only Admin wallets can manage roles.');
+        tabName = 'overview';
+      }
+
       document.querySelectorAll('[id^="tab-"]').forEach(function (el) {
         el.style.display = el.id === 'tab-' + tabName ? 'block' : 'none';
       });
@@ -472,8 +512,9 @@
       document.querySelectorAll('.sidebar__link').forEach(function (link) {
         link.classList.remove('active');
       });
-      if (event && event.currentTarget && event.currentTarget.classList.contains('sidebar__link')) {
-        event.currentTarget.classList.add('active');
+      const activeLink = document.querySelector(".sidebar__link[onclick=\"showTab('" + tabName + "')\"]");
+      if (activeLink) {
+        activeLink.classList.add('active');
       }
 
       // Mobile tabs only covers the original five
@@ -492,20 +533,13 @@
     async function toggleWallet() {
       const btn = document.getElementById('connectWallet');
       if (btn.classList.contains('wallet-btn--connected')) {
-        btn.classList.remove('wallet-btn--connected');
-        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
-        PROVENLEDGER.signer = null;
-        PROVENLEDGER.address = null;
-        const badge = document.getElementById('roleBadge');
-        if (badge) badge.style.display = 'none';
+        resetDashboardSession();
         return;
       }
       try {
         const addr = await PROVENLEDGER.connectWallet();
-        btn.classList.add('wallet-btn--connected');
-        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
-          + PROVENLEDGER.shortAddr(addr) + '</span>';
-        _applyRoleGuard(addr);
+        setConnectedWalletButton(addr);
+        await _applyRoleGuard(addr);
       } catch (err) {
         alert(err.message || err);
       }
@@ -514,6 +548,8 @@
     async function _applyRoleGuard(addr) {
       let role = 'consumer';
       try { role = await PROVENLEDGER.getRoleLabel(addr); } catch (e) { /* RPC issue — default consumer */ }
+      currentDashboardRole = role;
+      setRolesAccessVisible(role === 'admin');
 
       const badge = document.getElementById('roleBadge');
       if (badge) {
@@ -590,12 +626,34 @@
 
       if (!PROVENLEDGER.signer) {
         try { await PROVENLEDGER.connectWallet(); } catch (e) { return alert(e.message || e); }
-        const btn = document.getElementById('connectWallet');
-        btn.classList.add('wallet-btn--connected');
-        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
-          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+        setConnectedWalletButton(PROVENLEDGER.address);
       }
       try { await PROVENLEDGER.ensureCorrectNetwork(); } catch (e) { return alert(e.message || e); }
+      setConnectedWalletButton(PROVENLEDGER.address);
+
+      let rc;
+      let isAdmin = false;
+      try {
+        rc = PROVENLEDGER.getReadContract();
+        const adminRoleId = await rc.ADMIN_ROLE();
+        isAdmin = await rc.hasRole(adminRoleId, PROVENLEDGER.address);
+      } catch (e) {
+        return alert(e.message || e);
+      }
+
+      currentDashboardRole = isAdmin ? 'admin' : await PROVENLEDGER.getRoleLabel(PROVENLEDGER.address);
+      setRolesAccessVisible(isAdmin);
+      if (!isAdmin) {
+        return alert('⛔ Only Admin wallets can grant or revoke roles.');
+      }
+
+      if (roleName === 'ADMIN_ROLE') {
+        const defaultAdminRole = await rc.DEFAULT_ADMIN_ROLE();
+        const canManageAdmins = await rc.hasRole(defaultAdminRole, PROVENLEDGER.address);
+        if (!canManageAdmins) {
+          return alert('⛔ Granting or revoking ADMIN_ROLE requires DEFAULT_ADMIN_ROLE.');
+        }
+      }
 
       openTxModal(label + ' ' + roleName, 'Waiting for wallet signature…');
       try {
@@ -747,6 +805,16 @@
         setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
         const receipt = await tx.wait();
         showTxSuccess(receipt, 'Status: ' + status + '<br>Location: ' + location);
+        if (typeof pushCheckpointToDashboard === 'function') {
+          pushCheckpointToDashboard({
+            batchId: batchId,
+            status: status,
+            location: location,
+            actor: PROVENLEDGER.address || '',
+            txHash: tx.hash,
+            block: receipt.blockNumber || 0,
+          });
+        }
       } catch (err) {
         showTxError(err);
       }

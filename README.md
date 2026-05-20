@@ -85,6 +85,108 @@ The deploy script automatically grants `MANUFACTURER_ROLE` to the deployer addre
 
 ---
 
+## Run Full Local Demo
+
+Use this flow when you want to run the whole dApp locally with a local Hardhat blockchain,
+MetaMask, and the static frontend.
+
+> **Security / network note:** The checked-in `public/assets/js/config.js` points to the
+> team's Polygon Amoy demo contract. A contract address is public and is not a secret, but it
+> controls which deployed contract the frontend reads from and writes to. If you are running
+> locally or deploying your own instance, replace `CONTRACT_ADDRESS`, `EXPECTED_CHAIN_ID`, and
+> `PUBLIC_RPC` with your own values before using the dApp. Never put private keys in `config.js`;
+> private keys belong only in `.env`, which is ignored by git.
+
+### 1. Start a Local Hardhat Node
+
+Open terminal 1 and keep it running:
+
+```bash
+npx hardhat node
+```
+
+Hardhat will print a list of local test accounts. These accounts are public development keys
+only — never use them on a live network.
+
+### 2. Deploy the Contract Locally
+
+Open terminal 2:
+
+```bash
+npx hardhat run scripts/deploy.cjs --network localhost
+```
+
+Copy the printed `CONTRACT_ADDRESS`. On a fresh Hardhat node this is usually:
+
+```text
+0x5FbDB2315678afecb367f032d93F642f64180aa3
+```
+
+### 3. Configure the Frontend for Localhost
+
+Edit `public/assets/js/config.js` so it points to the local deployment:
+
+```js
+window.PROVENLEDGER_CONFIG = {
+  CONTRACT_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  EXPECTED_CHAIN_ID: 31337n,
+  EXPECTED_NETWORK_NAME: "Hardhat Localhost",
+  EXPLORER_BASE: "",
+  PUBLIC_RPC: "http://127.0.0.1:8545",
+};
+```
+
+To switch back to Polygon Amoy, restore the Amoy contract address, chain ID `80002n`, Amoy
+RPC URL, and PolygonScan explorer URL.
+
+### 4. Add Hardhat Localhost to MetaMask
+
+Add a custom network in MetaMask:
+
+| Field | Value |
+|---|---|
+| Network name | Hardhat Localhost |
+| RPC URL | `http://127.0.0.1:8545` |
+| Chain ID | `31337` |
+| Currency symbol | `ETH` |
+
+Import the first Hardhat account into MetaMask if you want the same wallet that deployed the
+contract. The deploy script grants this wallet both admin access and manufacturer access:
+
+```text
+Private key: 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+Address:     0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+```
+
+### 5. Serve the Frontend
+
+Opening the HTML files directly works for read-only pages, but serving the `public/` folder
+through localhost is more reliable for MetaMask and camera-based QR scanning:
+
+```bash
+python3 -m http.server 8080 -d public
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8080
+```
+
+### 6. Try the Local Workflow
+
+1. Open `http://127.0.0.1:8080/admin.html`.
+2. Connect MetaMask using the imported Hardhat account.
+3. Register a batch and copy the generated Batch ID.
+4. Add one or more checkpoints for that Batch ID.
+5. Open `http://127.0.0.1:8080/scan.html`.
+6. Paste the Batch ID and verify the on-chain record.
+
+If the dashboard cannot connect, confirm that `npx hardhat node` is still running, MetaMask is
+on Chain ID `31337`, and `public/assets/js/config.js` contains the local contract address.
+
+---
+
 ## DApp Frontend
 
 The browser UI lives in `public/` and is split into three pages:
@@ -130,8 +232,12 @@ MetaMask wallet address — no login or account registration required.
    (`CONTRACT_ADDRESS` field). Adjust `EXPECTED_CHAIN_ID` and `PUBLIC_RPC` if
    targeting a different network.
 
-3. Open `public/index.html` directly in your browser (no server needed),
-   or serve the `public/` folder with any static host.
+3. Open `public/index.html` directly in your browser for a quick read-only preview,
+   or serve the `public/` folder through localhost for the full MetaMask and QR scanner flow:
+
+   ```bash
+   python3 -m http.server 8080 -d public
+   ```
 
 4. Use the dApp:
    - **Scan & Verify** — paste a Batch ID or scan a QR code to read the on-chain

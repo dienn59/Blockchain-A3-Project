@@ -51,10 +51,22 @@ describe("ProvenLedgerVN", function () {
       expect(await contract.hasRole(MANUFACTURER_ROLE, manufacturer.address)).to.be.true;
     });
 
-    it("non-admin cannot grant MANUFACTURER_ROLE", async function () {
-      const { contract, other, manufacturer, MANUFACTURER_ROLE } = await loadFixture(deployFixture);
+    it("admin can revoke MANUFACTURER_ROLE from another account", async function () {
+      const { contract, manufacturer, MANUFACTURER_ROLE } = await loadFixture(deployWithManufacturerFixture);
+      expect(await contract.hasRole(MANUFACTURER_ROLE, manufacturer.address)).to.be.true;
+
+      await contract.revokeRole(MANUFACTURER_ROLE, manufacturer.address);
+
+      expect(await contract.hasRole(MANUFACTURER_ROLE, manufacturer.address)).to.be.false;
+    });
+
+    it("non-admin cannot grant MANUFACTURER_ROLE or ADMIN_ROLE", async function () {
+      const { contract, other, manufacturer, MANUFACTURER_ROLE, ADMIN_ROLE } = await loadFixture(deployFixture);
       await expect(
         contract.connect(other).grantRole(MANUFACTURER_ROLE, manufacturer.address)
+      ).to.be.reverted;
+      await expect(
+        contract.connect(other).grantRole(ADMIN_ROLE, manufacturer.address)
       ).to.be.reverted;
     });
   });
@@ -101,6 +113,17 @@ describe("ProvenLedgerVN", function () {
       const { contract, admin } = await loadFixture(deployFixture);
       await expect(
         contract.connect(admin).registerBatch(
+          BATCH_ID, ORIGIN, NOW, EXPIRY, UNIT_COUNT, METADATA_URI
+        )
+      ).to.be.reverted;
+    });
+
+    it("revoked manufacturer can no longer register a batch", async function () {
+      const { contract, manufacturer, MANUFACTURER_ROLE } = await loadFixture(deployWithManufacturerFixture);
+      await contract.revokeRole(MANUFACTURER_ROLE, manufacturer.address);
+
+      await expect(
+        contract.connect(manufacturer).registerBatch(
           BATCH_ID, ORIGIN, NOW, EXPIRY, UNIT_COUNT, METADATA_URI
         )
       ).to.be.reverted;
@@ -244,6 +267,14 @@ describe("ProvenLedgerVN", function () {
       await expect(
         contract.connect(scanner).recordScan(BATCH_ID, 0, LOC_HCM)
       ).to.emit(contract, "UnitScanned");
+    });
+
+    it("emits UnitScanned with updated count and locationHash", async function () {
+      const { contract, scanner } = await loadFixture(batchRegisteredFixture);
+      await expect(
+        contract.connect(scanner).recordScan(BATCH_ID, 0, LOC_HCM)
+      ).to.emit(contract, "UnitScanned")
+        .withArgs(BATCH_ID, 0, scanner.address, 1, anyValue, LOC_HCM);
     });
 
     it("first scan initialises count=1 and firstScanAt", async function () {
