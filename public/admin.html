@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — ProvenLedgerVN</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__brand">
+        <div class="navbar__logo">PL</div>
+        <div class="navbar__title">Proven<span>Ledger</span></div>
+      </a>
+      <ul class="navbar__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="scan.html">Scan &amp; Verify</a></li>
+        <li><a href="admin.html" class="active">Dashboard</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <div class="navbar__network">
+          <span class="navbar__network-dot"></span>
+          Polygon Amoy
+        </div>
+        <span id="roleBadge" style="display:none;"></span>
+        <button class="wallet-btn" id="connectWallet" onclick="toggleWallet()">
+          <span class="wallet-btn__icon">◆</span>
+          Connect Wallet
+        </button>
+        <button class="navbar__hamburger" id="hamburger" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="scan.html">Scan &amp; Verify</a>
+    <a href="admin.html" class="active">Dashboard</a>
+    <button class="wallet-btn" onclick="toggleWallet()">
+      <span class="wallet-btn__icon">◆</span>
+      Connect Wallet
+    </button>
+  </div>
+
+  <!-- ===== DASHBOARD LAYOUT ===== -->
+  <div class="dashboard">
+
+    <!-- Mobile Tab Bar (shown on tablet/phone) -->
+    <div class="admin-mobile-tabs" id="mobileTabs">
+      <button class="active" onclick="showTab('overview')">📊 Dashboard</button>
+      <button onclick="showTab('register')">📦 Register Batch</button>
+      <button onclick="showTab('checkpoint')">📍 Checkpoint</button>
+      <button onclick="showTab('batches')">🗂️ All Batches</button>
+      <button onclick="showTab('activity')">📋 Activity</button>
+    </div>
+
+    <!-- Sidebar (hidden on mobile) -->
+    <aside class="sidebar">
+      <span class="sidebar__section-label">Overview</span>
+      <a href="#" class="sidebar__link active" onclick="showTab('overview')">
+        <span class="sidebar__link-icon">📊</span>
+        Dashboard
+      </a>
+
+      <span class="sidebar__section-label">Actions</span>
+      <a href="#" class="sidebar__link" onclick="showTab('register')">
+        <span class="sidebar__link-icon">📦</span>
+        Register Batch
+      </a>
+      <a href="#" class="sidebar__link" onclick="showTab('checkpoint')">
+        <span class="sidebar__link-icon">📍</span>
+        Add Checkpoint
+      </a>
+
+      <span class="sidebar__section-label">Data</span>
+      <a href="#" class="sidebar__link" onclick="showTab('batches')">
+        <span class="sidebar__link-icon">🗂️</span>
+        All Batches
+      </a>
+      <a href="#" class="sidebar__link" onclick="showTab('activity')">
+        <span class="sidebar__link-icon">📋</span>
+        Activity Log
+      </a>
+
+      <span class="sidebar__section-label">Settings</span>
+      <a href="#" class="sidebar__link" id="rolesNavLink" onclick="showTab('roles')" style="display:none;">
+        <span class="sidebar__link-icon">⚙️</span>
+        Roles &amp; Access
+      </a>
+      <a href="#" class="sidebar__link" onclick="showTab('config')">
+        <span class="sidebar__link-icon">🔑</span>
+        Contract Config
+      </a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard__content">
+
+      <!-- ===== OVERVIEW TAB ===== -->
+      <div id="tab-overview">
+        <h2 class="dashboard__title">Dashboard</h2>
+        <p class="dashboard__subtitle">Overview of your on-chain supply chain activity</p>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card__label">Total Batches</div>
+            <div class="stat-card__value" id="stat-total-batches" style="color: var(--accent-purple-light);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Active Checkpoints</div>
+            <div class="stat-card__value" id="stat-active-checkpoints" style="color: var(--accent-green-light);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">On-Chain Scans</div>
+            <div class="stat-card__value" id="stat-consumer-scans" style="color: var(--accent-blue);">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__label">Anomaly Flags</div>
+            <div class="stat-card__value" id="stat-anomaly-flags" style="color: var(--accent-amber);">0</div>
+          </div>
+        </div>
+
+        <!-- Recent Batches Table -->
+        <div class="data-table-wrapper">
+          <div class="data-table-header">
+            <h3>Recent Batches</h3>
+            <button class="btn btn--primary btn--sm" onclick="showTab('register')">+ Register New</button>
+          </div>
+          <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch ID</th>
+                <th>Product</th>
+                <th>Factory</th>
+                <th>Expiry</th>
+                <th>Checkpoints</th>
+                <th>Scans</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-batches-body">
+              <tr id="dashboard-loading">
+                <td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                  <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border-light);border-top-color:var(--accent-purple);border-radius:50%;animation:spin 0.8s linear infinite;vertical-align:middle;margin-right:8px;"></span>
+                  Loading on-chain data…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+      <div id="tab-register" style="display: none;">
+        <h2 class="dashboard__title">Register New Batch</h2>
+        <p class="dashboard__subtitle">Mint a new Batch ID on the ProvenLedgerVN smart contract</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>📦 Batch Details</h3>
+            <p>All fields will be recorded immutably on-chain. Double-check before submitting.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Product Name</label>
+              <input id="reg-product-name" type="text" class="input" placeholder="e.g. Vinamilk Sure Prevent Gold 900g" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Production Date</label>
+                <input id="reg-prod-date" type="date" class="input" value="2026-05-15" />
+              </div>
+              <div class="form-group">
+                <label>Expiry Date</label>
+                <input id="reg-expiry-date" type="date" class="input" value="2027-06-15" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Factory Location</label>
+              <select id="reg-factory">
+                <option>Binh Duong Plant #2</option>
+                <option>HCM Plant #1</option>
+                <option>Ha Noi Plant #3</option>
+                <option>Lam Dong Plant</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Units in Batch</label>
+                <input id="reg-unit-count" type="number" class="input" placeholder="e.g. 10000" value="10000" />
+              </div>
+              <div class="form-group">
+                <label>Product Category</label>
+                <select id="reg-category">
+                  <option>Dairy — Nutritional</option>
+                  <option>Dairy — Fresh Milk</option>
+                  <option>Cosmetics — Skincare</option>
+                  <option>Cosmetics — Suncare</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Notes (optional — stored off-chain)</label>
+              <textarea id="reg-notes" placeholder="Additional notes about this batch, e.g. special packaging run, limited edition…"></textarea>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--primary" onclick="submitRegister()">
+              ⬡&ensp;Register on Polygon
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CHECKPOINT TAB ===== -->
+      <div id="tab-checkpoint" style="display: none;">
+        <h2 class="dashboard__title">Add Checkpoint</h2>
+        <p class="dashboard__subtitle">Record a supply chain state change for an existing batch</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>📍 Checkpoint Details</h3>
+            <p>This will trigger a state-change event on the smart contract for the selected batch.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Batch ID (paste the 0x… hex from Register success modal)</label>
+              <input id="ckp-batch-id" type="text" class="input" placeholder="0x…" />
+            </div>
+
+            <div class="form-group">
+              <label>New Status</label>
+              <select id="ckp-status">
+                <option>Shipped from Factory</option>
+                <option>Arrived at Distribution Hub</option>
+                <option>In Transit to Region</option>
+                <option>Arrived at Regional Depot</option>
+                <option>Delivered to Retail Store</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Location Name</label>
+              <input id="ckp-location-name" type="text" class="input" placeholder="e.g. HCM City Regional Depot" />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Latitude</label>
+                <input id="ckp-lat" type="text" class="input" placeholder="10.8231" />
+              </div>
+              <div class="form-group">
+                <label>Longitude</label>
+                <input id="ckp-lng" type="text" class="input" placeholder="106.6297" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Handler Notes (optional — not stored on-chain)</label>
+              <textarea id="ckp-notes" placeholder="e.g. Received 500 cartons, 3 damaged in transit"></textarea>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--green" onclick="submitCheckpoint()">
+              📍&ensp;Submit Checkpoint
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ALL BATCHES TAB ===== -->
+      <div id="tab-batches" style="display: none;">
+        <h2 class="dashboard__title">All Batches</h2>
+        <p class="dashboard__subtitle">Complete inventory of on-chain batch registrations</p>
+
+        <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+          <input type="text" class="input" placeholder="Search by Batch ID or product name…"
+            style="max-width: 360px;" oninput="filterAllBatches(this.value)" />
+        </div>
+
+        <div class="data-table-wrapper">
+          <div class="data-table-scroll">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Batch ID</th>
+                <th>Product</th>
+                <th>Factory</th>
+                <th>Produced</th>
+                <th>Expiry</th>
+                <th>Units</th>
+                <th>Scans</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="all-batches-body">
+              <tr>
+                <td colspan="8" style="text-align:center;color:var(--text-secondary);padding:20px 0;">
+                  Loading on-chain data…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ACTIVITY LOG TAB ===== -->
+      <div id="tab-activity" style="display: none;">
+        <h2 class="dashboard__title">Activity Log</h2>
+        <p class="dashboard__subtitle">Real-time on-chain transaction events</p>
+
+        <div class="result__card" style="max-width: 100%;">
+          <div class="result__card-body">
+            <div class="timeline" id="activity-timeline">
+              <p style="color:var(--text-secondary);text-align:center;padding:24px 0;">Loading on-chain activity…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ROLES & ACCESS TAB ===== -->
+      <div id="tab-roles" style="display: none;">
+        <h2 class="dashboard__title">Roles &amp; Access</h2>
+        <p class="dashboard__subtitle">Admin-only role management on the deployed contract</p>
+
+        <div class="form-panel">
+          <div class="form-panel__header">
+            <h3>⚙️ Role Management</h3>
+            <p>Only Admin wallets can grant or revoke MANUFACTURER_ROLE. Granting or revoking ADMIN_ROLE itself requires DEFAULT_ADMIN_ROLE.</p>
+          </div>
+          <div class="form-panel__body">
+            <div class="form-group">
+              <label>Target Wallet Address</label>
+              <input id="role-address" type="text" class="input" placeholder="0x… address to grant or revoke the role on" />
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="role-select">
+                <option value="MANUFACTURER_ROLE">MANUFACTURER_ROLE — register batches &amp; add checkpoints</option>
+                <option value="ADMIN_ROLE">ADMIN_ROLE — add checkpoints to any batch; grantable only by default admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-panel__footer">
+            <button class="btn btn--outline" onclick="showTab('overview')">Cancel</button>
+            <button class="btn btn--primary" onclick="submitGrantRole()">⊕&ensp;Grant Role</button>
+            <button class="btn btn--sm" style="background:rgba(239,68,68,0.1);color:var(--accent-red-light);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-sm);padding:8px 16px;cursor:pointer;font-size:0.875rem;" onclick="submitRevokeRole()">⊖&ensp;Revoke Role</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CONTRACT CONFIG TAB ===== -->
+      <div id="tab-config" style="display: none;">
+        <h2 class="dashboard__title">Contract Config</h2>
+        <p class="dashboard__subtitle">Deployment details for the ProvenLedgerVN smart contract</p>
+
+        <div class="result__card" style="max-width: 680px;">
+          <div class="result__card-header"><h4>🔑&ensp;Deployment Info</h4></div>
+          <div class="result__card-body" id="config-info-body"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ===== TRANSACTION MODAL ===== -->
+  <div id="txModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.6); backdrop-filter:blur(8px); align-items:center; justify-content:center;">
+    <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 40px; max-width: 460px; width: 90%; text-align: center;">
+      <div id="txPending">
+        <div style="width: 64px; height: 64px; border: 3px solid var(--border-light); border-top-color: var(--accent-purple); border-radius: 50%; margin: 0 auto 20px; animation: spin 1s linear infinite;"></div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px;" id="txPendingTitle">Confirm Transaction</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 4px;" id="txPendingMsg">Waiting for wallet confirmation…</p>
+        <p style="color: var(--text-tertiary); font-size: 0.78rem; font-family: var(--font-mono);" id="txPendingInfo">Submitting to Polygon Amoy…</p>
+      </div>
+      <div id="txSuccess" style="display: none;">
+        <div style="width: 64px; height: 64px; background: var(--accent-green-glow); border: 2px solid var(--accent-green); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent-green-light);">✓</div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px; color: var(--accent-green-light);">Transaction Confirmed</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px;">Successfully recorded on Polygon Amoy</p>
+        <p style="color: var(--text-tertiary); font-size: 0.78rem; font-family: var(--font-mono); margin-bottom: 20px; word-break: break-all;" id="txSuccessInfo">Tx: …</p>
+        <button class="btn btn--outline btn--sm" onclick="closeTxModal()">Close</button>
+      </div>
+      <div id="txError" style="display: none;">
+        <div style="width: 64px; height: 64px; background: rgba(239,68,68,0.12); border: 2px solid var(--accent-red); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--accent-red-light);">✕</div>
+        <h3 style="font-family: var(--font-body); margin-bottom: 8px; color: var(--accent-red-light);">Transaction Failed</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; word-break: break-word;" id="txErrorInfo">Error</p>
+        <button class="btn btn--outline btn--sm" onclick="closeTxModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes rowFadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/contract.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+  <script>
+    let currentDashboardRole = 'guest';
+
+    function setRolesAccessVisible(visible) {
+      const rolesNavLink = document.getElementById('rolesNavLink');
+      if (rolesNavLink) rolesNavLink.style.display = visible ? '' : 'none';
+      if (!visible && document.getElementById('tab-roles').style.display !== 'none') {
+        showTab('overview');
+      }
+    }
+
+    function setConnectedWalletButton(address) {
+      const btn = document.getElementById('connectWallet');
+      if (!btn) return;
+      btn.classList.add('wallet-btn--connected');
+      btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+        + PROVENLEDGER.shortAddr(address) + '</span>';
+    }
+
+    function resetDashboardSession() {
+      const btn = document.getElementById('connectWallet');
+      if (btn) {
+        btn.classList.remove('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
+      }
+      PROVENLEDGER.signer = null;
+      PROVENLEDGER.address = null;
+      PROVENLEDGER.provider = null;
+      currentDashboardRole = 'guest';
+      setRolesAccessVisible(false);
+      const badge = document.getElementById('roleBadge');
+      if (badge) badge.style.display = 'none';
+    }
+
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', resetDashboardSession);
+      window.ethereum.on('chainChanged', resetDashboardSession);
+    }
+
+    /* Prepend a live batch row to the Recent Batches table after a successful registration. */
+    function prependRecentBatch(batchId, productName, factory, expiryUnix) {
+      const tbody = document.getElementById('recent-batches-body');
+      if (!tbody) return;
+
+      const expiryStr = new Date(expiryUnix * 1000).toISOString().slice(0, 10);
+      const shortId   = PROVENLEDGER.shortHash(batchId);
+
+      const tr = document.createElement('tr');
+      tr.style.animation = 'rowFadeIn 0.45s ease';
+
+      // Batch ID — click to copy full hex; turns green briefly to confirm copy
+      const tdId = document.createElement('td');
+      tdId.className   = 'mono';
+      tdId.title       = batchId;
+      tdId.style.cursor = 'pointer';
+      tdId.textContent  = shortId + ' 📋';
+      tdId.onclick = function () {
+        navigator.clipboard.writeText(batchId).then(function () {
+          tdId.style.color = 'var(--accent-green-light)';
+          setTimeout(function () { tdId.style.color = ''; }, 2000);
+        });
+      };
+
+      const tdProduct     = document.createElement('td');
+      tdProduct.textContent = productName;
+
+      const tdFactory     = document.createElement('td');
+      tdFactory.textContent = factory;
+
+      const tdExpiry      = document.createElement('td');
+      tdExpiry.textContent  = expiryStr;
+
+      const tdCp          = document.createElement('td');
+      tdCp.textContent      = '0';
+
+      const tdStatus      = document.createElement('td');
+      tdStatus.innerHTML    = '<span class="badge badge--purple">Registered</span>';
+
+      tr.append(tdId, tdProduct, tdFactory, tdExpiry, tdCp, tdStatus);
+      tbody.insertBefore(tr, tbody.firstChild);
+    }
+
+    /* Tab Switching — handles any tab ID dynamically */
+    function showTab(tabName) {
+      if (tabName === 'roles' && currentDashboardRole !== 'admin') {
+        alert('⛔ Only Admin wallets can manage roles.');
+        tabName = 'overview';
+      }
+
+      document.querySelectorAll('[id^="tab-"]').forEach(function (el) {
+        el.style.display = el.id === 'tab-' + tabName ? 'block' : 'none';
+      });
+
+      document.querySelectorAll('.sidebar__link').forEach(function (link) {
+        link.classList.remove('active');
+      });
+      const activeLink = document.querySelector(".sidebar__link[onclick=\"showTab('" + tabName + "')\"]");
+      if (activeLink) {
+        activeLink.classList.add('active');
+      }
+
+      // Mobile tabs only covers the original five
+      const mobileTabs = ['overview', 'register', 'checkpoint', 'batches', 'activity'];
+      document.querySelectorAll('.admin-mobile-tabs button').forEach(function (btn, i) {
+        btn.classList.toggle('active', mobileTabs[i] === tabName);
+      });
+    }
+
+    function toggleMenu() {
+      document.getElementById('hamburger').classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+
+    /* Wallet */
+    async function toggleWallet() {
+      const btn = document.getElementById('connectWallet');
+      if (btn.classList.contains('wallet-btn--connected')) {
+        resetDashboardSession();
+        return;
+      }
+      try {
+        const addr = await PROVENLEDGER.connectWallet();
+        setConnectedWalletButton(addr);
+        await _applyRoleGuard(addr);
+      } catch (err) {
+        alert(err.message || err);
+      }
+    }
+
+    async function _applyRoleGuard(addr) {
+      let role = 'consumer';
+      try { role = await PROVENLEDGER.getRoleLabel(addr); } catch (e) { /* RPC issue — default consumer */ }
+      currentDashboardRole = role;
+      setRolesAccessVisible(role === 'admin');
+
+      const badge = document.getElementById('roleBadge');
+      if (badge) {
+        const styleMap = {
+          admin:        'background:rgba(139,92,246,0.15);color:#c4b5fd;border:1px solid rgba(139,92,246,0.3);',
+          manufacturer: 'background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);',
+          consumer:     'background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.3);',
+        };
+        const labelMap = { admin: 'Admin', manufacturer: 'Manufacturer', consumer: 'Consumer' };
+        badge.style.cssText = 'display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:0.72rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;' + styleMap[role];
+        badge.textContent = labelMap[role];
+      }
+
+      if (role === 'consumer') {
+        const overlay = document.getElementById('consumerOverlay');
+        if (overlay) overlay.style.display = 'flex';
+        setTimeout(function () { window.location.href = 'scan.html'; }, 3000);
+      } else {
+        const gate = document.getElementById('walletGate');
+        if (gate) gate.style.display = 'none';
+      }
+    }
+
+    /* Transaction Modal helpers */
+    function openTxModal(title, msg) {
+      document.getElementById('txPendingTitle').textContent = title || 'Confirm Transaction';
+      document.getElementById('txPendingMsg').textContent = msg || 'Waiting for wallet confirmation…';
+      document.getElementById('txPendingInfo').textContent = 'Submitting to Polygon Amoy…';
+      document.getElementById('txPending').style.display = 'block';
+      document.getElementById('txSuccess').style.display = 'none';
+      document.getElementById('txError').style.display = 'none';
+      document.getElementById('txModal').style.display = 'flex';
+    }
+
+    function setTxPendingInfo(info) {
+      document.getElementById('txPendingInfo').textContent = info;
+    }
+
+    function showTxSuccess(receipt, extraHtml) {
+      const cfg = window.PROVENLEDGER_CONFIG;
+      const txUrl = cfg.EXPLORER_BASE + '/tx/' + receipt.hash;
+      let html = 'Tx: <a href="' + txUrl + '" target="_blank" style="color:var(--accent-purple-light);">'
+        + PROVENLEDGER.shortHash(receipt.hash) + '</a> &middot; Block #' + receipt.blockNumber;
+      if (extraHtml) html += '<br>' + extraHtml;
+      document.getElementById('txSuccessInfo').innerHTML = html;
+      document.getElementById('txPending').style.display = 'none';
+      document.getElementById('txSuccess').style.display = 'block';
+      document.getElementById('txError').style.display = 'none';
+    }
+
+    function showTxError(err) {
+      document.getElementById('txErrorInfo').textContent = err.reason || err.shortMessage || err.message || String(err);
+      document.getElementById('txPending').style.display = 'none';
+      document.getElementById('txSuccess').style.display = 'none';
+      document.getElementById('txError').style.display = 'block';
+    }
+
+    function closeTxModal() {
+      document.getElementById('txModal').style.display = 'none';
+    }
+
+    document.getElementById('txModal').addEventListener('click', function(e) {
+      if (e.target === this) closeTxModal();
+    });
+
+    /* Roles & Access */
+    async function submitGrantRole()  { await _roleAction('grantRole',  'Grant');  }
+    async function submitRevokeRole() { await _roleAction('revokeRole', 'Revoke'); }
+
+    async function _roleAction(method, label) {
+      const address  = val('role-address');
+      const roleName = val('role-select');
+      if (!ethers.isAddress(address)) return alert('Invalid wallet address.');
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); } catch (e) { return alert(e.message || e); }
+        setConnectedWalletButton(PROVENLEDGER.address);
+      }
+      try { await PROVENLEDGER.ensureCorrectNetwork(); } catch (e) { return alert(e.message || e); }
+      setConnectedWalletButton(PROVENLEDGER.address);
+
+      let rc;
+      let isAdmin = false;
+      try {
+        rc = PROVENLEDGER.getReadContract();
+        const adminRoleId = await rc.ADMIN_ROLE();
+        isAdmin = await rc.hasRole(adminRoleId, PROVENLEDGER.address);
+      } catch (e) {
+        return alert(e.message || e);
+      }
+
+      currentDashboardRole = isAdmin ? 'admin' : await PROVENLEDGER.getRoleLabel(PROVENLEDGER.address);
+      setRolesAccessVisible(isAdmin);
+      if (!isAdmin) {
+        return alert('⛔ Only Admin wallets can grant or revoke roles.');
+      }
+
+      if (roleName === 'ADMIN_ROLE') {
+        const defaultAdminRole = await rc.DEFAULT_ADMIN_ROLE();
+        const canManageAdmins = await rc.hasRole(defaultAdminRole, PROVENLEDGER.address);
+        if (!canManageAdmins) {
+          return alert('⛔ Granting or revoking ADMIN_ROLE requires DEFAULT_ADMIN_ROLE.');
+        }
+      }
+
+      openTxModal(label + ' ' + roleName, 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const roleId   = await contract[roleName]();
+        const tx       = await contract[method](roleId, address, {
+          maxPriorityFeePerGas: ethers.parseUnits('25', 'gwei'),
+          maxFeePerGas:         ethers.parseUnits('30', 'gwei'),
+          gasLimit: 100_000,
+        });
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting…');
+        const receipt = await tx.wait();
+        showTxSuccess(receipt, label + 'd ' + roleName + ' → ' + PROVENLEDGER.shortAddr(address));
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+
+    /* Helpers */
+    function val(id) { return (document.getElementById(id).value || '').trim(); }
+    function dateToUnix(yyyy_mm_dd) {
+      if (!yyyy_mm_dd) return 0;
+      const t = new Date(yyyy_mm_dd + 'T00:00:00Z').getTime();
+      return Math.floor(t / 1000);
+    }
+
+    /* Register Batch — calls contract.registerBatch */
+    async function submitRegister() {
+      const productName = val('reg-product-name');
+      const factory     = val('reg-factory');
+      const category    = val('reg-category');
+      const notes       = val('reg-notes');
+      const prodDate    = dateToUnix(val('reg-prod-date'));
+      const expiryDate  = dateToUnix(val('reg-expiry-date'));
+      const unitCount   = parseInt(val('reg-unit-count') || '0', 10);
+
+      if (!productName) return alert('Please enter a Product Name.');
+      if (!factory)     return alert('Please select a Factory.');
+      if (!unitCount)   return alert('Units in Batch must be greater than 0.');
+      if (!prodDate || !expiryDate || expiryDate <= prodDate) {
+        return alert('Invalid dates — Expiry Date must be after Production Date.');
+      }
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); }
+        catch (e) { return alert(e.message || e); }
+        const btn = document.getElementById('connectWallet');
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+      }
+
+      // Guard against a stale signer created on the wrong network.
+      // ensureCorrectNetwork() switches to Polygon Amoy and rebuilds the signer if needed.
+      try { await PROVENLEDGER.ensureCorrectNetwork(); }
+      catch (e) { return alert(e.message || e); }
+
+      const batchId = PROVENLEDGER.makeBatchId(productName);
+      const metadataURI = JSON.stringify({ productName: productName, category: category, notes: notes });
+
+      // Pre-flight: verify MANUFACTURER_ROLE so we surface a clear message instead
+      // of the opaque "missing revert data" that AccessControl produces on failure.
+      try {
+        const rc     = PROVENLEDGER.getReadContract();
+        const roleId = await rc.MANUFACTURER_ROLE();
+        const ok     = await rc.hasRole(roleId, PROVENLEDGER.address);
+        if (!ok) {
+          return alert(
+            '⛔ Wallet ' + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + ' does not have MANUFACTURER_ROLE.\n\n' +
+            'Grant it from the deployer account:\n' +
+            '  npx hardhat run scripts/grant-role.cjs --network polygonAmoy\n\n' +
+            'Or use the wallet that deployed the contract.'
+          );
+        }
+      } catch (roleErr) {
+        console.warn('Role pre-flight skipped (RPC issue):', roleErr.message);
+      }
+
+      openTxModal('Register Batch', 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const tx = await contract.registerBatch(batchId, factory, prodDate, expiryDate, unitCount, metadataURI, {
+          maxPriorityFeePerGas: ethers.parseUnits("25", "gwei"),
+          maxFeePerGas:         ethers.parseUnits("30", "gwei"),
+          gasLimit:             300_000,
+        });
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
+        const receipt = await tx.wait();
+        const batchExtra = 'Batch ID: <span title="' + batchId + '" style="cursor:pointer;" onclick="navigator.clipboard.writeText(\'' + batchId + '\')">'
+          + PROVENLEDGER.shortHash(batchId) + '</span> (click to copy)';
+        showTxSuccess(receipt, batchExtra);
+        // Push to all three dashboard tabs (Recent Batches, All Batches, Activity Log)
+        if (typeof pushToDashboard === 'function') {
+          pushToDashboard({
+            batchId: batchId, productName: productName, origin: factory,
+            expiryDate: expiryDate, productionDate: prodDate,
+            unitCount: unitCount, metadataURI: metadataURI,
+            manufacturer: PROVENLEDGER.address || '',
+          });
+        }
+        // Pre-fill checkpoint form with the just-created batchId for convenience
+        document.getElementById('ckp-batch-id').value = batchId;
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+
+    /* Add Checkpoint — calls contract.addCheckpoint */
+    async function submitCheckpoint() {
+      const batchId      = val('ckp-batch-id');
+      const status       = val('ckp-status');
+      const locationName = val('ckp-location-name');
+      const lat          = val('ckp-lat');
+      const lng          = val('ckp-lng');
+
+      if (!batchId || !batchId.startsWith('0x') || batchId.length !== 66) {
+        return alert('Batch ID must be a 32-byte hex string (0x… 66 characters).');
+      }
+      if (!locationName) return alert('Please enter a Location Name.');
+
+      if (!PROVENLEDGER.signer) {
+        try { await PROVENLEDGER.connectWallet(); }
+        catch (e) { return alert(e.message || e); }
+        const btn = document.getElementById('connectWallet');
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(PROVENLEDGER.address) + '</span>';
+      }
+
+      try { await PROVENLEDGER.ensureCorrectNetwork(); }
+      catch (e) { return alert(e.message || e); }
+
+      let _ckpRole = 'consumer';
+      try { _ckpRole = await PROVENLEDGER.getRoleLabel(PROVENLEDGER.address); } catch (e) {}
+      if (_ckpRole === 'consumer') {
+        return alert('⛔ This wallet has Consumer access only.\nOnly Manufacturers or Admins can add checkpoints.');
+      }
+
+      const location = PROVENLEDGER.packLocation(locationName, lat, lng);
+
+      openTxModal('Submit Checkpoint', 'Waiting for wallet signature…');
+      try {
+        const contract = PROVENLEDGER.getWriteContract();
+        const tx = await contract.addCheckpoint(batchId, location, status, {
+          maxPriorityFeePerGas: ethers.parseUnits("25", "gwei"),
+          maxFeePerGas:         ethers.parseUnits("30", "gwei"),
+          gasLimit:             200_000,
+        });
+        setTxPendingInfo('Tx submitted: ' + PROVENLEDGER.shortHash(tx.hash) + '. Waiting for confirmation…');
+        const receipt = await tx.wait();
+        showTxSuccess(receipt, 'Status: ' + status + '<br>Location: ' + location);
+        if (typeof pushCheckpointToDashboard === 'function') {
+          pushCheckpointToDashboard({
+            batchId: batchId,
+            status: status,
+            location: location,
+            actor: PROVENLEDGER.address || '',
+            txHash: tx.hash,
+            block: receipt.blockNumber || 0,
+          });
+        }
+      } catch (err) {
+        showTxError(err);
+      }
+    }
+  </script>
+  <!-- Wallet Gate Overlay (shown on page load until wallet is connected) -->
+  <div id="walletGate" style="display:flex;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.92);backdrop-filter:blur(14px);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <div style="text-align:center;max-width:420px;padding:0 24px;">
+      <div style="width:64px;height:64px;background:rgba(139,92,246,0.15);border:2px solid rgba(139,92,246,0.4);border-radius:50%;margin:0 auto 20px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;">◆</div>
+      <h2 style="color:white;font-family:var(--font-body);margin-bottom:8px;">Connect Wallet to Continue</h2>
+      <p style="color:rgba(255,255,255,0.5);margin-bottom:28px;line-height:1.6;font-size:0.9rem;">Dashboard access is restricted to Manufacturers and Admins. Please connect your MetaMask wallet to verify your role.</p>
+      <button class="btn btn--primary" onclick="toggleWallet()" style="padding:12px 32px;font-size:1rem;">
+        <span style="margin-right:8px;">◆</span> Connect MetaMask
+      </button>
+    </div>
+  </div>
+
+  <!-- Consumer Access Guard Overlay -->
+  <div id="consumerOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);backdrop-filter:blur(12px);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <div style="text-align:center;max-width:420px;padding:0 24px;">
+      <div style="font-size:3rem;margin-bottom:16px;">🔒</div>
+      <h2 style="color:white;font-family:var(--font-body);margin-bottom:8px;">Access Restricted</h2>
+      <p style="color:rgba(255,255,255,0.55);margin-bottom:24px;line-height:1.6;">This wallet has <strong style="color:#94a3b8;">Consumer</strong> access only. The Dashboard is restricted to Manufacturers and Admins.</p>
+      <p style="color:rgba(255,255,255,0.35);font-size:0.82rem;margin-bottom:20px;">Redirecting to Scan &amp; Verify…</p>
+      <a href="scan.html" style="display:inline-block;padding:10px 24px;background:var(--accent-purple);color:white;border-radius:var(--radius-sm);text-decoration:none;font-size:0.9rem;font-weight:500;">Go to Scan &amp; Verify →</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ProvenLedgerVN — Verify Product Authenticity</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__brand">
+        <div class="navbar__logo">PL</div>
+        <div class="navbar__title">Proven<span>Ledger</span></div>
+      </a>
+
+      <ul class="navbar__links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="scan.html">Scan &amp; Verify</a></li>
+        <li><a href="admin.html">Dashboard</a></li>
+      </ul>
+
+      <div class="navbar__actions">
+        <div class="navbar__network">
+          <span class="navbar__network-dot"></span>
+          Polygon Amoy
+        </div>
+        <button class="wallet-btn" id="connectWallet" onclick="toggleWallet()">
+          <span class="wallet-btn__icon">◆</span>
+          Connect Wallet
+        </button>
+        <button class="navbar__hamburger" id="hamburger" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu Overlay -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html" class="active">Home</a>
+    <a href="scan.html">Scan &amp; Verify</a>
+    <a href="admin.html">Dashboard</a>
+    <button class="wallet-btn" onclick="toggleWallet()">
+      <span class="wallet-btn__icon">◆</span>
+      Connect Wallet
+    </button>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero__bg">
+      <div class="hero__bg-orb hero__bg-orb--purple"></div>
+      <div class="hero__bg-orb hero__bg-orb--green"></div>
+    </div>
+
+    <div class="container hero__content">
+      <div class="hero__text">
+        <div class="hero__badge">
+          <span class="hero__badge-icon">⬡</span>
+          Built on Polygon &middot; Immutable Provenance
+        </div>
+        <h1 class="hero__heading">
+          Know Your Product is <em>Authentic</em>
+        </h1>
+        <p class="hero__desc">
+          ProvenLedgerVN gives Vietnamese consumers on-chain proof that their FMCG products — from Vinamilk nutrition to premium cosmetics — are genuine, unexpired, and traceable from factory to shelf.
+        </p>
+        <div class="hero__actions">
+          <a href="scan.html" class="btn btn--green btn--lg">
+            📷&ensp;Scan a Product
+          </a>
+          <a href="#how-it-works" class="btn btn--outline btn--lg">
+            How It Works
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__visual">
+        <div class="phone-mockup">
+          <div class="phone-mockup__notch"></div>
+          <div class="phone-mockup__screen">
+            <div class="phone-mockup__scan-area">
+              <span class="phone-mockup__qr-icon">⣿</span>
+            </div>
+            <div class="phone-mockup__result">
+              <div class="phone-mockup__result-header">
+                <div class="phone-mockup__result-icon">✓</div>
+                <div class="phone-mockup__result-title">Verified Authentic</div>
+              </div>
+              <div class="phone-mockup__result-row">
+                <span class="phone-mockup__result-label">Product</span>
+                <span class="phone-mockup__result-value">Vinamilk Sure Prevent</span>
+              </div>
+              <div class="phone-mockup__result-row">
+                <span class="phone-mockup__result-label">Batch</span>
+                <span class="phone-mockup__result-value">0x3a9f…e4c2</span>
+              </div>
+              <div class="phone-mockup__result-row">
+                <span class="phone-mockup__result-label">Expires</span>
+                <span class="phone-mockup__result-value">2027-02-15</span>
+              </div>
+              <div class="phone-mockup__result-row">
+                <span class="phone-mockup__result-label">Scans</span>
+                <span class="phone-mockup__result-value" style="color: #34D399;">3 ✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="features__header">
+        <p class="text-label" style="margin-bottom: 12px;">Why Blockchain?</p>
+        <h2>Tamper-Proof by Design</h2>
+        <p>Every data point is cryptographically signed and timestamped on Polygon — no single party can alter the record.</p>
+      </div>
+
+      <div class="features__grid">
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--purple">🔗</div>
+          <h3>Immutable Audit Trail</h3>
+          <p>Each batch registration and checkpoint update is an append-only transaction, signed by the acting wallet and permanently recorded on-chain.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--green">📱</div>
+          <h3>Instant QR Verification</h3>
+          <p>Consumers scan a standard QR code with any smartphone camera — no app download, no crypto wallet required. Results appear in seconds.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--blue">🛡️</div>
+          <h3>Anomaly Detection</h3>
+          <p>Smart-contract scan counting flags duplicate QR codes. If the same Batch ID is scanned from inconsistent locations or at unusual frequency, the consumer is alerted.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--green">💰</div>
+          <h3>Batch-Level Economics</h3>
+          <p>Batch-level storage reduces transaction volume because one blockchain record can represent thousands of product units, making the system far more scalable than recording every individual unit on-chain.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--purple">🏭</div>
+          <h3>Role-Based Access</h3>
+          <p>Manufacturer, distributor, and retailer wallets each hold distinct on-chain roles — only authorized actors can advance a batch through the supply chain.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon feature-card__icon--blue">📊</div>
+          <h3>Transparent &amp; Public</h3>
+          <p>Every record lives on a public blockchain. Regulators, journalists, or any citizen can independently verify claims without relying on corporate servers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="how-it-works__header">
+        <p class="text-label" style="margin-bottom: 12px;">Process</p>
+        <h2>From Factory to Your Hands</h2>
+        <p>Four blockchain-backed steps ensure every product tells the truth about where it's been.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step__number">1</div>
+          <div class="step__title">Batch Minted</div>
+          <div class="step__desc">Manufacturer registers a new batch on-chain with product name, production date, expiry, and factory location.</div>
+        </div>
+
+        <div class="step">
+          <div class="step__number">2</div>
+          <div class="step__title">Supply Chain Updates</div>
+          <div class="step__desc">Each distributor or warehouse scans the batch and triggers a checkpoint event on the smart contract.</div>
+        </div>
+
+        <div class="step">
+          <div class="step__number">3</div>
+          <div class="step__title">QR Code Linked</div>
+          <div class="step__desc">A QR code mapping to the Batch ID is printed on every unit. Consumers scan it with any phone camera.</div>
+        </div>
+
+        <div class="step">
+          <div class="step__number">4</div>
+          <div class="step__title">Instant Verification</div>
+          <div class="step__desc">The dApp queries the blockchain and displays the full verified journey — origin, transit, expiry — in seconds.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__inner">
+        <div class="footer__left">
+          <span style="color: var(--accent-purple-light); font-weight: 600;">ProvenLedgerVN</span>
+          <span>&middot;</span>
+          <span>RMIT Blockchain A3 — Group 6</span>
+        </div>
+        <ul class="footer__links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="scan.html">Verify</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <div class="footer__right">
+          <span class="navbar__network-dot" style="width:5px;height:5px;"></span>
+          Polygon Amoy Testnet
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/contract.js"></script>
+  <script>
+    async function toggleWallet() {
+      const btn = document.getElementById('connectWallet');
+      if (btn.classList.contains('wallet-btn--connected')) {
+        btn.classList.remove('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> Connect Wallet';
+        return;
+      }
+      try {
+        const addr = await PROVENLEDGER.connectWallet();
+        btn.classList.add('wallet-btn--connected');
+        btn.innerHTML = '<span class="wallet-btn__icon">◆</span> <span class="wallet-btn__address">'
+          + PROVENLEDGER.shortAddr(addr) + '</span>';
+      } catch (err) {
+        alert(err.message || err);
+      }
+    }
+
+    function toggleMenu() {
+      document.getElementById('hamburger').classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+  </script>
+</body>
+</html>

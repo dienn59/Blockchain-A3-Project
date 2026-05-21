@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scan &amp; Verify — ProvenLedgerVN</title>
+  <link rel="stylesheet" href="assets/css/styles.css" />
+  <!-- QR scanner library (html5-qrcode) -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar">
+    <div class="navbar__inner">
+      <a href="index.html" class="navbar__brand">
+        <div class="navbar__logo">PL</div>
+        <div class="navbar__title">Proven<span>Ledger</span></div>
+      </a>
+      <ul class="navbar__links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="scan.html" class="active">Scan &amp; Verify</a></li>
+        <li><a href="admin.html">Dashboard</a></li>
+      </ul>
+      <div class="navbar__actions">
+        <div class="navbar__network">
+          <span class="navbar__network-dot"></span>
+          Polygon Amoy
+        </div>
+        <span style="padding:6px 14px;border-radius:9999px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);font-size:0.78rem;font-weight:500;color:var(--accent-green-light);">🔓 Read-Only</span>
+        <button class="navbar__hamburger" id="hamburger" onclick="toggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">Home</a>
+    <a href="scan.html" class="active">Scan &amp; Verify</a>
+    <a href="admin.html">Dashboard</a>
+    <p style="color:var(--accent-green-light);font-size:0.85rem;margin-top:12px;">🔓 No wallet required for verification</p>
+  </div>
+
+  <!-- ===== PAGE ===== -->
+  <main class="page">
+    <div class="container container--narrow">
+      <div class="page__header" style="text-align:center;">
+        <p class="text-label" style="margin-bottom:8px;">Consumer Verification</p>
+        <h1>Scan &amp; Verify</h1>
+        <p>Point your camera at the QR code on the product packaging, or enter a Batch ID manually.</p>
+        <p style="color:var(--accent-green-light);font-size:0.85rem;margin-top:10px;">🔓 No wallet or app download required. Verification is read-only.</p>
+      </div>
+
+      <!-- ===== SCANNER VIEW ===== -->
+      <div class="scanner" id="scannerView">
+        <!-- QR scanner viewport — html5-qrcode mounts here -->
+        <div id="qr-reader" style="width:100%;max-width:400px;margin:0 auto 24px;border-radius:16px;overflow:hidden;border:2px solid var(--border-light);background:var(--bg-card);"></div>
+
+        <div style="text-align:center;margin-bottom:28px;">
+          <button class="btn btn--primary btn--sm" id="startCameraBtn" onclick="startCamera()">📷&ensp;Start Camera Scanner</button>
+          <button class="btn btn--ghost btn--sm" id="stopCameraBtn" onclick="stopCamera()" style="display:none;">■&ensp;Stop Camera</button>
+          <p id="cameraHint" style="color:var(--text-tertiary);font-size:0.78rem;margin-top:8px;">Camera access required for live scanning. Your camera feed stays on your device.</p>
+        </div>
+
+        <div class="scanner__manual">
+          <p>Or enter a Batch ID manually</p>
+          <div class="scanner__input-group">
+            <input type="text" class="input" id="batchIdInput" placeholder="0x… (66-char hex from a registered batch)" />
+            <button class="btn btn--primary" onclick="lookupBatch()">Verify</button>
+          </div>
+        </div>
+
+        <!-- Result state preview buttons -->
+        <div style="text-align:center;margin-top:32px;">
+          <p class="text-label" style="margin-bottom:12px;">Preview Result States</p>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn btn--green btn--sm" onclick="showResult('verified')">✓ Verified</button>
+            <button class="btn btn--sm" style="background:rgba(245,158,11,0.15);color:#F59E0B;" onclick="showResult('warning')">⚠ Anomaly</button>
+            <button class="btn btn--sm" style="background:rgba(239,68,68,0.12);color:#F87171;" onclick="showResult('expired')">⏰ Expired</button>
+            <button class="btn btn--sm" style="background:rgba(239,68,68,0.12);color:#F87171;" onclick="showResult('failed')">✕ Not Found</button>
+            <button class="btn btn--ghost btn--sm" onclick="showScanner()">← Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RESULT: VERIFIED (also used for Expired by flipping the status banner) ===== -->
+      <div class="result" id="resultVerified" style="display:none;">
+        <button class="btn btn--ghost btn--sm" onclick="showScanner()" style="margin-bottom:20px;">← Scan Another Product</button>
+
+        <div class="result__status result__status--verified" id="rv-status">
+          <div class="result__status-icon" id="rv-status-icon">✓</div>
+          <div class="result__status-text">
+            <h3 id="rv-status-title">Verified Authentic</h3>
+            <p id="rv-status-desc">This product's on-chain record is intact and all checkpoints are valid.</p>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header">
+            <h4>📦&ensp;Product Information</h4>
+            <span class="badge badge--green" id="rv-product-badge">On-Chain</span>
+          </div>
+          <div class="result__card-body">
+            <div class="result__row"><span class="result__row-label">Product Name</span><span class="result__row-value" id="rv-product-name">—</span></div>
+            <div class="result__row"><span class="result__row-label">Batch ID</span><span class="result__row-value result__row-value--mono" id="rv-batch-id" title="">—</span></div>
+            <div class="result__row"><span class="result__row-label">Manufacturer</span><span class="result__row-value result__row-value--mono" id="rv-manufacturer" title="">—</span></div>
+            <div class="result__row"><span class="result__row-label">Factory / Origin</span><span class="result__row-value" id="rv-factory">—</span></div>
+            <div class="result__row"><span class="result__row-label">Production Date</span><span class="result__row-value" id="rv-prod-date">—</span></div>
+            <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value" id="rv-expiry-date">—</span></div>
+            <div class="result__row"><span class="result__row-label">Units in Batch</span><span class="result__row-value" id="rv-unit-count">—</span></div>
+            <div class="result__row" id="rv-scan-row" style="display:none;"><span class="result__row-label">Scan Count</span><span class="result__row-value"><span class="scan-count scan-count--normal" id="rv-scan-count">—</span></span></div>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header">
+            <h4>🗺️&ensp;Supply Chain Journey</h4>
+            <span class="badge badge--purple" id="rv-checkpoint-count">0 Checkpoints</span>
+          </div>
+          <div class="result__card-body">
+            <div class="timeline" id="rv-timeline"></div>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header"><h4>🔗&ensp;On-Chain Proof</h4></div>
+          <div class="result__card-body">
+            <div class="result__row"><span class="result__row-label">Contract</span><span class="result__row-value result__row-value--mono" id="rv-contract" title="">—</span></div>
+            <div class="result__row"><span class="result__row-label">Network</span><span class="result__row-value">Polygon Amoy Testnet</span></div>
+            <div style="margin-top:16px;text-align:center;">
+              <a id="rv-polygonscan-link" href="#" target="_blank" class="btn btn--outline btn--sm">View on PolygonScan ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RESULT: ANOMALY WARNING ===== -->
+      <div class="result" id="resultWarning" style="display:none;">
+        <button class="btn btn--ghost btn--sm" onclick="showScanner()" style="margin-bottom:20px;">← Scan Another Product</button>
+
+        <div class="result__status result__status--warning">
+          <div class="result__status-icon">⚠</div>
+          <div class="result__status-text">
+            <h3>Anomaly Detected</h3>
+            <p>This Batch ID has an unusually high scan count. The QR code may have been cloned onto counterfeit units.</p>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header"><h4>📦&ensp;Product Information</h4><span class="badge badge--amber">Review</span></div>
+          <div class="result__card-body">
+            <div class="result__row"><span class="result__row-label">Product Name</span><span class="result__row-value">Dermablock BB Sun Cream SPF50+</span></div>
+            <div class="result__row"><span class="result__row-label">Batch ID</span><span class="result__row-value result__row-value--mono">0x7c12d4e8…b3a1</span></div>
+            <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value">2027-06-30</span></div>
+            <div class="result__row"><span class="result__row-label">Scan Count</span><span class="result__row-value"><span class="scan-count scan-count--warning">847 scans — Anomalous</span></span></div>
+            <div class="result__row"><span class="result__row-label">Scan Locations</span><span class="result__row-value" style="color:var(--accent-amber);">12 different cities</span></div>
+          </div>
+        </div>
+
+        <div class="result__card" style="border-color:rgba(245,158,11,0.2);">
+          <div class="result__card-body" style="text-align:center;padding:32px;">
+            <p style="color:var(--accent-amber);font-weight:600;margin-bottom:8px;">⚠ Exercise Caution</p>
+            <p style="color:var(--text-secondary);font-size:0.9rem;max-width:420px;margin:0 auto;">A legitimate batch of this size should have far fewer consumer scans. This pattern often indicates QR code cloning. Consider purchasing from a verified retailer, or contact the manufacturer directly.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RESULT: EXPIRED PRODUCT ===== -->
+      <div class="result" id="resultExpired" style="display:none;">
+        <button class="btn btn--ghost btn--sm" onclick="showScanner()" style="margin-bottom:20px;">← Scan Another Product</button>
+
+        <div class="result__status result__status--failed">
+          <div class="result__status-icon">⏰</div>
+          <div class="result__status-text">
+            <h3>Product Expired</h3>
+            <p>This batch exists on-chain and is authentic, but the on-chain expiry date has passed. Do not consume this product.</p>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header"><h4>📦&ensp;Product Information</h4><span class="badge badge--red">Expired</span></div>
+          <div class="result__card-body">
+            <div class="result__row"><span class="result__row-label">Product Name</span><span class="result__row-value">Vinamilk Organic Gold 900g</span></div>
+            <div class="result__row"><span class="result__row-label">Batch ID</span><span class="result__row-value result__row-value--mono">0x6fab29c1…28d5</span></div>
+            <div class="result__row"><span class="result__row-label">Manufacturer</span><span class="result__row-value">Vinamilk JSC</span></div>
+            <div class="result__row"><span class="result__row-label">Factory</span><span class="result__row-value">Lam Dong Plant</span></div>
+            <div class="result__row"><span class="result__row-label">Production Date</span><span class="result__row-value">2024-11-10</span></div>
+            <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value" style="color:var(--accent-red-light);font-weight:700;">2025-12-01 — EXPIRED</span></div>
+            <div class="result__row"><span class="result__row-label">Days Past Expiry</span><span class="result__row-value"><span class="scan-count scan-count--danger">166 days overdue</span></span></div>
+            <div class="result__row"><span class="result__row-label">On-Chain Record</span><span class="result__row-value"><span class="scan-count scan-count--normal">Authentic ✓</span></span></div>
+          </div>
+        </div>
+
+        <div class="result__card" style="border-color:rgba(239,68,68,0.25);">
+          <div class="result__card-body" style="text-align:center;padding:32px;">
+            <p style="font-size:2.5rem;margin-bottom:14px;">🚫</p>
+            <p style="color:var(--accent-red-light);font-weight:700;font-size:1.1rem;margin-bottom:8px;">Do Not Use This Product</p>
+            <p style="color:var(--text-secondary);font-size:0.9rem;max-width:460px;margin:0 auto 20px;">Although this batch was registered by a legitimate manufacturer and has a valid on-chain provenance record, it has exceeded its expiry date. Consuming expired products may pose health risks. If this product is still being sold, please report the seller.</p>
+            <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+              <a href="https://amoy.polygonscan.com/address/0x1f3E1F2e15e30f4F37CEf17FFa6f68b6E24d4709" target="_blank" class="btn btn--outline btn--sm">View On-Chain Proof ↗</a>
+              <a href="#" class="btn btn--sm" style="background:rgba(239,68,68,0.12);color:var(--accent-red-light);">Report Expired Product Sale ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="result__card">
+          <div class="result__card-header"><h4>🗺️&ensp;Supply Chain Journey</h4><span class="badge badge--green">Authentic — 4 Checkpoints</span></div>
+          <div class="result__card-body">
+            <div class="timeline">
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Batch Registered — Lam Dong Plant</div><div class="timeline__meta"><span>📅 2024-11-10 07:45 UTC</span><span>🔑 0x7A3b…F92d</span></div></div></div>
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Shipped — Central Hub, Long An</div><div class="timeline__meta"><span>📅 2024-11-12 13:20 UTC</span><span>🔑 0x4Bc8…A31e</span></div></div></div>
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Arrived — HCM City Regional Depot</div><div class="timeline__meta"><span>📅 2024-11-14 09:10 UTC</span><span>🔑 0x9Fd2…C78b</span></div></div></div>
+              <div class="timeline__item"><div class="timeline__dot"></div><div class="timeline__content"><div class="timeline__title">Delivered — CoopMart Le Van Sy, Tan Binh</div><div class="timeline__meta"><span>📅 2024-11-16 06:55 UTC</span><span>🔑 0x1Ae5…D94f</span></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RESULT: NOT FOUND ===== -->
+      <div class="result" id="resultFailed" style="display:none;">
+        <button class="btn btn--ghost btn--sm" onclick="showScanner()" style="margin-bottom:20px;">← Scan Another Product</button>
+
+        <div class="result__status result__status--failed">
+          <div class="result__status-icon">✕</div>
+          <div class="result__status-text">
+            <h3>Batch Not Found</h3>
+            <p>This Batch ID does not exist on the ProvenLedgerVN smart contract. The product may be counterfeit.</p>
+          </div>
+        </div>
+
+        <div class="result__card" style="border-color:rgba(239,68,68,0.15);">
+          <div class="result__card-body" style="text-align:center;padding:40px;">
+            <p style="font-size:3rem;margin-bottom:16px;">🚫</p>
+            <p style="color:var(--accent-red-light);font-weight:600;font-size:1.1rem;margin-bottom:8px;">No On-Chain Record</p>
+            <p style="color:var(--text-secondary);font-size:0.9rem;max-width:420px;margin:0 auto 24px;">The scanned QR code does not point to any registered batch in our smart contract. This product has not been verified by any manufacturer on ProvenLedgerVN.</p>
+            <div style="display:flex;gap:10px;justify-content:center;">
+              <button class="btn btn--outline btn--sm" onclick="showScanner()">Try Another Code</button>
+              <a href="#" class="btn btn--ghost btn--sm">Report Counterfeit ↗</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer__inner">
+        <div class="footer__left">
+          <span style="color:var(--accent-purple-light);font-weight:600;">ProvenLedgerVN</span>
+          <span>&middot;</span>
+          <span>RMIT Blockchain A3 — Group 6</span>
+        </div>
+        <ul class="footer__links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="scan.html">Verify</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <div class="footer__right">
+          <span class="navbar__network-dot" style="width:5px;height:5px;"></span>
+          Polygon Amoy Testnet
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/contract.js"></script>
+  <script>
+    /* QR Scanner — uses html5-qrcode library */
+    let html5QrCode = null;
+    let _scanHandled = false; // debounce: one trigger per camera session
+
+    function startCamera() {
+      if (html5QrCode) return;
+      _scanHandled = false;
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+      function onStarted() {
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('stopCameraBtn').style.display = 'inline-flex';
+        const hint = document.getElementById('cameraHint');
+        hint.textContent = 'Camera active — hold a QR code up to the webcam to scan automatically.';
+        hint.style.color = 'var(--accent-green-light)';
+      }
+
+      function tryStart(constraints) {
+        html5QrCode = new Html5Qrcode("qr-reader");
+        return html5QrCode.start(constraints, config, onScanSuccess, onScanFailure);
+      }
+
+      // Try rear camera first (phones); fall back to front/any camera (laptop webcam)
+      tryStart({ facingMode: "environment" })
+        .then(onStarted)
+        .catch(() => {
+          try { html5QrCode.clear(); } catch (e) {}
+          tryStart({ facingMode: "user" })
+            .then(onStarted)
+            .catch(err => {
+              try { html5QrCode.clear(); } catch (e) {}
+              html5QrCode = null;
+              alert("Camera access denied or unavailable.\nPlease use the manual Batch ID input instead.");
+              console.error("Camera error:", err);
+            });
+        });
+    }
+
+    async function stopCamera() {
+      if (!html5QrCode) return;
+      const instance = html5QrCode;
+      html5QrCode = null;
+      try { await instance.stop(); } catch (e) { /* already stopped */ }
+      try { instance.clear(); } catch (e) {}
+      document.getElementById('startCameraBtn').style.display = 'inline-flex';
+      document.getElementById('stopCameraBtn').style.display = 'none';
+      const hint = document.getElementById('cameraHint');
+      hint.textContent = 'Camera access required for live scanning. Your camera feed stays on your device.';
+      hint.style.color = '';
+    }
+
+    async function onScanSuccess(decodedText) {
+      if (_scanHandled) return;
+      _scanHandled = true;
+
+      const hint = document.getElementById('cameraHint');
+      hint.textContent = 'QR code detected! Looking up batch...';
+      hint.style.color = 'var(--accent-green-light)';
+
+      await stopCamera();
+
+      // QR payload may be a URL (?batchId=0x…&unit=N) or the raw batchId
+      let batchId = decodedText;
+      try {
+        const url = new URL(decodedText);
+        const paramId = url.searchParams.get('batchId');
+        if (paramId) batchId = paramId;
+      } catch (e) { /* not a URL — treat as raw batchId */ }
+
+      document.getElementById('batchIdInput').value = batchId;
+      lookupBatch();
+    }
+
+    function onScanFailure() { /* scanning in progress — no-op */ }
+
+    /* View switching logic */
+    const allResults = ['scannerView','resultVerified','resultWarning','resultExpired','resultFailed'];
+
+    function showResult(type) {
+      allResults.forEach(id => document.getElementById(id).style.display = 'none');
+      const map = { verified:'resultVerified', warning:'resultWarning', expired:'resultExpired', failed:'resultFailed' };
+      if (map[type]) document.getElementById(map[type]).style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function showScanner() {
+      allResults.forEach(id => document.getElementById(id).style.display = 'none');
+      document.getElementById('scannerView').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleMenu() {
+      document.getElementById('hamburger').classList.toggle('open');
+      document.getElementById('mobileMenu').classList.toggle('open');
+    }
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+      });
+    }
+
+    function fmtDate(unixSec) {
+      if (!unixSec) return '—';
+      const d = new Date(Number(unixSec) * 1000);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function fmtDateTime(unixSec) {
+      const d = new Date(Number(unixSec) * 1000);
+      return d.toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+    }
+
+    const ANOMALY_THRESHOLD = 10;
+
+    function relayerBaseUrl() {
+      const cfg = window.PROVENLEDGER_CONFIG || {};
+      return (cfg.RELAYER_URL || '').replace(/\/$/, '');
+    }
+
+    async function recordScanViaRelayer(batchId, unitIndex) {
+      const base = relayerBaseUrl();
+      if (!base) return null;
+      const res = await fetch(base + '/record-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchId: batchId,
+          unitIndex: unitIndex,
+          locationHash: ethers.ZeroHash,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Relayer could not record this scan.');
+      }
+      return data;
+    }
+
+    function updateScanCountDisplay(scanCount) {
+      const count = Number(scanCount || 0);
+      const isAnomaly = count > ANOMALY_THRESHOLD;
+      const scanCountEl = document.getElementById('rv-scan-count');
+      scanCountEl.textContent = count + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (count !== 1 ? 's' : ''));
+      scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
+      if (isAnomaly) {
+        document.getElementById('rv-status').className = 'result__status result__status--warning';
+        document.getElementById('rv-status-icon').textContent = '⚠';
+        document.getElementById('rv-status-title').textContent = 'Anomaly Detected';
+        document.getElementById('rv-status-desc').textContent =
+          'This Batch ID has an unusually high scan count. The QR code may have been cloned onto counterfeit units.';
+        const badge = document.getElementById('rv-product-badge');
+        badge.className = 'badge badge--amber';
+        badge.textContent = 'Review';
+      }
+    }
+
+    async function tryRelayedScan(batchId, unitIndex) {
+      try {
+        const data = await recordScanViaRelayer(batchId, unitIndex);
+        if (!data) return;
+        updateScanCountDisplay(data.scanCount);
+      } catch (e) {
+        console.debug('relayed scan skipped:', e.message);
+      }
+    }
+
+    /* Main lookup — calls getBatch + getCheckpoints + getUnitScan and renders the result. */
+    async function lookupBatch() {
+      const batchId = (document.getElementById('batchIdInput').value || '').trim();
+      if (!batchId.startsWith('0x') || batchId.length !== 66) {
+        return alert('Batch ID must be a 32-byte hex string (0x… 66 characters).');
+      }
+
+      let contract;
+      try {
+        contract = PROVENLEDGER.getReadContract();
+      } catch (e) {
+        return alert(e.message || e);
+      }
+
+      try {
+        const exists = await contract.batchExists(batchId);
+        if (!exists) { showResult('failed'); return; }
+
+        const [batch, checkpoints, unitScan] = await Promise.all([
+          contract.getBatch(batchId),
+          contract.getCheckpoints(batchId),
+          contract.getUnitScan(batchId, 0).catch(() => null),
+        ]);
+
+        const now = Math.floor(Date.now() / 1000);
+        const isExpired = Number(batch.expiryDate) < now;
+        const scanCount = unitScan ? Number(unitScan.count) : 0;
+        const isAnomaly = !isExpired && scanCount > ANOMALY_THRESHOLD;
+
+        renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly);
+        showResult('verified');
+        tryRelayedScan(batchId, 0); // no MetaMask; only runs when RELAYER_URL is configured
+      } catch (err) {
+        console.error(err);
+        alert('Lookup failed: ' + (err.reason || err.shortMessage || err.message || err));
+      }
+    }
+
+    function renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly) {
+      // Banner state — three cases: anomaly, expired, verified
+      const status = document.getElementById('rv-status');
+      status.className = 'result__status ' + (
+        isAnomaly  ? 'result__status--warning' :
+        isExpired  ? 'result__status--failed'  :
+                     'result__status--verified'
+      );
+      document.getElementById('rv-status-icon').textContent = isAnomaly ? '⚠' : isExpired ? '⏰' : '✓';
+      document.getElementById('rv-status-title').textContent =
+        isAnomaly ? 'Anomaly Detected' : isExpired ? 'Product Expired' : 'Verified Authentic';
+      document.getElementById('rv-status-desc').textContent = isAnomaly
+        ? 'This Batch ID has an unusually high scan count. The QR code may have been cloned onto counterfeit units.'
+        : isExpired
+          ? 'The batch is genuine on-chain, but the expiry date has passed. Do not consume.'
+          : "This product's on-chain record is intact and all checkpoints are valid.";
+
+      const badge = document.getElementById('rv-product-badge');
+      badge.className = 'badge ' + (isAnomaly ? 'badge--amber' : isExpired ? 'badge--red' : 'badge--green');
+      badge.textContent = isAnomaly ? 'Review' : isExpired ? 'Expired' : 'On-Chain';
+
+      // Live scan count for unit 0
+      const scanRow = document.getElementById('rv-scan-row');
+      const scanCountEl = document.getElementById('rv-scan-count');
+      scanRow.style.display = '';
+      scanCountEl.textContent = scanCount + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (scanCount !== 1 ? 's' : ''));
+      scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
+
+      // Try parse metadataURI as JSON for productName/category
+      let productName = '(unnamed product)';
+      if (batch.metadataURI) {
+        try {
+          const meta = JSON.parse(batch.metadataURI);
+          if (meta.productName) productName = meta.productName;
+        } catch (e) { /* metadataURI not JSON — leave as is */ }
+      }
+
+      document.getElementById('rv-product-name').textContent = productName;
+      const batchEl = document.getElementById('rv-batch-id');
+      batchEl.textContent = PROVENLEDGER.shortHash(batchId);
+      batchEl.title = batchId;
+      const mfgEl = document.getElementById('rv-manufacturer');
+      mfgEl.textContent = PROVENLEDGER.shortAddr(batch.manufacturer);
+      mfgEl.title = batch.manufacturer;
+      document.getElementById('rv-factory').textContent = batch.origin || '—';
+      document.getElementById('rv-prod-date').textContent = fmtDate(batch.productionDate);
+      const expEl = document.getElementById('rv-expiry-date');
+      expEl.textContent = fmtDate(batch.expiryDate) + (isExpired ? ' — EXPIRED' : '');
+      expEl.style.color = isExpired ? 'var(--accent-red-light)' : '';
+      expEl.style.fontWeight = isExpired ? '700' : '';
+      document.getElementById('rv-unit-count').textContent = Number(batch.unitCount).toLocaleString();
+
+      // Timeline
+      const tl = document.getElementById('rv-timeline');
+      tl.innerHTML = '';
+      const cpCount = checkpoints.length;
+      document.getElementById('rv-checkpoint-count').textContent =
+        cpCount + ' Checkpoint' + (cpCount === 1 ? '' : 's');
+
+      if (cpCount === 0) {
+        tl.innerHTML = '<p style="color:var(--text-secondary);text-align:center;padding:20px;">No checkpoints recorded yet for this batch.</p>';
+      } else {
+        checkpoints.forEach(function(cp) {
+          const item = document.createElement('div');
+          item.className = 'timeline__item';
+          item.innerHTML =
+            '<div class="timeline__dot"></div>' +
+            '<div class="timeline__content">' +
+              '<div class="timeline__title">' + escapeHtml(cp.status) + ' — ' + escapeHtml(cp.location) + '</div>' +
+              '<div class="timeline__meta">' +
+                '<span>📅 ' + fmtDateTime(cp.timestamp) + '</span>' +
+                '<span>🔑 ' + PROVENLEDGER.shortAddr(cp.actor) + '</span>' +
+              '</div>' +
+            '</div>';
+          tl.appendChild(item);
+        });
+      }
+
+      // On-chain proof
+      const cfg = window.PROVENLEDGER_CONFIG;
+      const cEl = document.getElementById('rv-contract');
+      cEl.textContent = PROVENLEDGER.shortAddr(cfg.CONTRACT_ADDRESS);
+      cEl.title = cfg.CONTRACT_ADDRESS;
+      document.getElementById('rv-polygonscan-link').href =
+        cfg.EXPLORER_BASE + '/address/' + cfg.CONTRACT_ADDRESS;
+    }
+
+    /* Auto-lookup if landed via QR URL: scan.html?batchId=0x… */
+    window.addEventListener('DOMContentLoaded', function() {
+      const params = new URLSearchParams(window.location.search);
+      const qBatch = params.get('batchId');
+      if (qBatch) {
+        document.getElementById('batchIdInput').value = qBatch;
+        lookupBatch();
+      }
+    });
+  </script>
+</body>
+</html>

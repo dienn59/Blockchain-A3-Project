@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Hardhat build artifacts
+artifacts/
+cache/
+typechain-types/
+
+# Environment variables (keep .env.example as a template)
+.env
+.env.*
+!.env.example
+
+# Root-level reference documents (keep locally, never push)
+/*.pdf
+/*.txt
+
+# Local-only documentation files
+BENCHMARK_REPORT.md
+QNA.md
+AGENTS.md
+CLAUDE.md
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
