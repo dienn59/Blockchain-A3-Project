@@ -7,4 +7,7 @@ window.PROVENLEDGER_CONFIG = {
   EXPECTED_NETWORK_NAME: "Polygon Amoy",
   EXPLORER_BASE: "https://amoy.polygonscan.com",
   PUBLIC_RPC: "https://rpc-amoy.polygon.technology",
+  // Optional gasless scan relayer. Leave blank for read-only consumer scanning.
+  // Use "/api" when serving the frontend through scripts/scan-relayer.cjs.
+  RELAYER_URL: "/api",
 };

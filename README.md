@@ -192,7 +192,7 @@ on Chain ID `31337`, and `public/assets/js/config.js` contains the local contrac
 The browser UI lives in `public/` and is split into three pages:
 
 - `public/index.html` — landing page (project overview)
-- `public/scan.html` — consumer Scan & Verify (read-only, no wallet required)
+- `public/scan.html` — consumer Scan & Verify (read-only by default; optional relayer recording)
 - `public/admin.html` — Dashboard for Manufacturers and Admins (role-gated)
 
 Shared assets:
@@ -210,7 +210,7 @@ The Dashboard enforces role-based access on page load:
 |---|---|
 | **Admin** | Full dashboard — register batches, add checkpoints, grant/revoke roles |
 | **Manufacturer** | Full dashboard — register batches, add checkpoints for own batches |
-| **Consumer** | Redirected to `scan.html` — read-only verification only |
+| **Consumer** | Redirected to `scan.html` — read-only verification; optional relayer records scans without wallet prompts |
 
 Roles are determined on-chain via OpenZeppelin `AccessControl`. Identity is the connected
 MetaMask wallet address — no login or account registration required.
@@ -241,9 +241,52 @@ MetaMask wallet address — no login or account registration required.
 
 4. Use the dApp:
    - **Scan & Verify** — paste a Batch ID or scan a QR code to read the on-chain
-     record. Read-only, no wallet required.
+     record. Read-only unless the optional relayer is enabled.
    - **Dashboard** — connect a MetaMask wallet with `MANUFACTURER_ROLE` or
      `ADMIN_ROLE` to register batches, add checkpoints, and manage roles.
+
+### Optional Gasless Scan Relayer
+
+Consumer verification is intentionally read-only by default. If you want each scan to increase
+the on-chain scan counter without asking consumers to sign MetaMask transactions, run the demo
+relayer. The relayer holds a funded backend wallet and submits `recordScan()` on behalf of the
+browser.
+
+1. Configure `.env`:
+
+   ```bash
+   CONTRACT_ADDRESS=0x...
+   RELAYER_PRIVATE_KEY=0x...        # funded throwaway wallet, never committed
+   RELAYER_RPC_URL=http://127.0.0.1:8545
+   RELAYER_PORT=8080
+   ```
+
+   For Polygon Amoy, use an Amoy RPC URL and fund the relayer wallet with testnet POL.
+
+2. In `public/assets/js/config.js`, set:
+
+   ```js
+   RELAYER_URL: "/api",
+   ```
+
+3. Start the relayer server:
+
+   ```bash
+   npm run serve:relayer
+   ```
+
+4. Open `http://127.0.0.1:8080/scan.html` and scan/verify a Batch ID. The page still
+   verifies read-only first, then automatically asks the relayer to record the scan in the background.
+   Dashboard `On-Chain Scans` increases only after the relayer transaction is mined.
+
+Do not use VSCode Live Server for relayer testing. Live Server only serves static files, so
+`/api/record-scan` will not exist. Use `npm run serve:relayer` and open the dApp from the same
+origin, for example `http://127.0.0.1:8080/admin.html`. Dashboard cache is stored in browser
+`localStorage` per origin and contract address, so data shown on port `5500` will not automatically
+appear on port `8080` unless imported or fetched again from the configured contract.
+
+For production, add authentication, stronger rate limiting, monitoring, and key management
+before exposing a relayer publicly.
 
 ### QR Code Format
 
@@ -267,7 +310,7 @@ contracts/
 scripts/
   deploy.cjs               — deployment + role setup script
   benchmark.js             — gas benchmark script
-  simulate.cjs             — anomaly detection simulation (pushes scan count above threshold)
+  simulate.cjs             — anomaly detection simulation (pushes scan count above threshold) (npx hardhat run scripts/simulate.cjs --network polygonAmoy)
 test/
   ProvenLedgerVN.js        — Hardhat/Chai unit tests
 public/

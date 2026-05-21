@@ -111,7 +111,6 @@
             <div class="result__row"><span class="result__row-label">Expiry Date</span><span class="result__row-value" id="rv-expiry-date">—</span></div>
             <div class="result__row"><span class="result__row-label">Units in Batch</span><span class="result__row-value" id="rv-unit-count">—</span></div>
             <div class="result__row" id="rv-scan-row" style="display:none;"><span class="result__row-label">Scan Count</span><span class="result__row-value"><span class="scan-count scan-count--normal" id="rv-scan-count">—</span></span></div>
-            <div class="result__row" id="rv-record-scan-row" style="display:none;"><span class="result__row-label">On-Chain Scan</span><span class="result__row-value"><button class="btn btn--ghost btn--sm" id="rv-record-scan-btn" onclick="recordCurrentScanOnChain()">Record Scan</button></span></div>
           </div>
         </div>
 
@@ -387,42 +386,56 @@
     }
 
     const ANOMALY_THRESHOLD = 10;
-    let currentVerifiedBatchId = '';
-    let currentVerifiedUnitIndex = 0;
 
-    // Optional write action. Verification itself is read-only; recording a scan
-    // changes contract state and therefore requires a wallet transaction.
-    async function recordScanOnChain(batchId, unitIndex) {
-      if (!window.ethereum) {
-        throw new Error('MetaMask is required only when recording a scan on-chain.');
-      }
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
-      const signer = await provider.getSigner();
-      const cfg = window.PROVENLEDGER_CONFIG;
-      const wContract = new ethers.Contract(cfg.CONTRACT_ADDRESS, window.PROVENLEDGER_ABI, signer);
-      const tx = await wContract.recordScan(batchId, unitIndex, ethers.ZeroHash);
-      return tx.wait();
+    function relayerBaseUrl() {
+      const cfg = window.PROVENLEDGER_CONFIG || {};
+      return (cfg.RELAYER_URL || '').replace(/\/$/, '');
     }
 
-    async function recordCurrentScanOnChain() {
-      if (!currentVerifiedBatchId) return;
-      const btn = document.getElementById('rv-record-scan-btn');
-      const original = btn ? btn.textContent : 'Record Scan';
+    async function recordScanViaRelayer(batchId, unitIndex) {
+      const base = relayerBaseUrl();
+      if (!base) return null;
+      const res = await fetch(base + '/record-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          batchId: batchId,
+          unitIndex: unitIndex,
+          locationHash: ethers.ZeroHash,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Relayer could not record this scan.');
+      }
+      return data;
+    }
+
+    function updateScanCountDisplay(scanCount) {
+      const count = Number(scanCount || 0);
+      const isAnomaly = count > ANOMALY_THRESHOLD;
+      const scanCountEl = document.getElementById('rv-scan-count');
+      scanCountEl.textContent = count + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (count !== 1 ? 's' : ''));
+      scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
+      if (isAnomaly) {
+        document.getElementById('rv-status').className = 'result__status result__status--warning';
+        document.getElementById('rv-status-icon').textContent = '⚠';
+        document.getElementById('rv-status-title').textContent = 'Anomaly Detected';
+        document.getElementById('rv-status-desc').textContent =
+          'This Batch ID has an unusually high scan count. The QR code may have been cloned onto counterfeit units.';
+        const badge = document.getElementById('rv-product-badge');
+        badge.className = 'badge badge--amber';
+        badge.textContent = 'Review';
+      }
+    }
+
+    async function tryRelayedScan(batchId, unitIndex) {
       try {
-        if (btn) {
-          btn.disabled = true;
-          btn.textContent = 'Recording…';
-        }
-        await recordScanOnChain(currentVerifiedBatchId, currentVerifiedUnitIndex);
-        if (btn) btn.textContent = 'Recorded';
-        await lookupBatch();
+        const data = await recordScanViaRelayer(batchId, unitIndex);
+        if (!data) return;
+        updateScanCountDisplay(data.scanCount);
       } catch (e) {
-        alert(e.reason || e.shortMessage || e.message || e);
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = original;
-        }
+        console.debug('relayed scan skipped:', e.message);
       }
     }
 
@@ -457,6 +470,7 @@
 
         renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly);
         showResult('verified');
+        tryRelayedScan(batchId, 0); // no MetaMask; only runs when RELAYER_URL is configured
       } catch (err) {
         console.error(err);
         alert('Lookup failed: ' + (err.reason || err.shortMessage || err.message || err));
@@ -464,9 +478,6 @@
     }
 
     function renderBatch(batchId, batch, checkpoints, isExpired, scanCount, isAnomaly) {
-      currentVerifiedBatchId = batchId;
-      currentVerifiedUnitIndex = 0;
-
       // Banner state — three cases: anomaly, expired, verified
       const status = document.getElementById('rv-status');
       status.className = 'result__status ' + (
@@ -493,13 +504,6 @@
       scanRow.style.display = '';
       scanCountEl.textContent = scanCount + (isAnomaly ? ' — Anomalous ⚠' : ' scan' + (scanCount !== 1 ? 's' : ''));
       scanCountEl.className = 'scan-count ' + (isAnomaly ? 'scan-count--warning' : 'scan-count--normal');
-      const recordRow = document.getElementById('rv-record-scan-row');
-      const recordBtn = document.getElementById('rv-record-scan-btn');
-      if (recordRow) recordRow.style.display = '';
-      if (recordBtn) {
-        recordBtn.disabled = false;
-        recordBtn.textContent = 'Record Scan';
-      }
 
       // Try parse metadataURI as JSON for productName/category
       let productName = '(unnamed product)';

@@ -13,7 +13,7 @@ const hre = require("hardhat");
 const { ethers } = hre;
 
 // ─── PASTE YOUR BATCH ID HERE ────────────────────────────────────────────────
-const BATCH_ID = "0x83196d4d75cc7d8d896a3713f6ae822ceba101978798867d501ce115c2c88267";
+const BATCH_ID = "0x075f8ba9ba62fb6b9f8e6ddf7a52c29b86be49590c28cc44ad50221fd0331e6c";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS;
